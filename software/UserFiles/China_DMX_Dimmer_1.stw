@@ -1,0 +1,16 @@
+;	STMicroelectronics Workspace file
+
+[Version]
+Keyword=ST7Workspace-V0.7
+
+[Project0]
+Filename=c_dmx_d_maincpu_u2\c_dmx_d_maincpu_u2.stp
+Dependencies=
+
+[Project1]
+Filename=c_dmx_d_slavecpu_u3_u4\c_dmx_d_slavecpu_u3_u4.stp
+Dependencies=
+[Options]
+ActiveProject=c_dmx_d_maincpu_u2
+ActiveConfig=Release
+AddSortedElements=0

@@ -1,0 +1,148 @@
+/*******************************************************************************
+* File Name          : cpumaster.c
+* Author             : W. Meyer
+* Date First Issued  : 01/11/2017
+* Description        : This file provides functions for sending data to other cpu's
+********************************************************************************
+* History:
+*  03/11/2017 : initial version
+*
+********************************************************************************
+*
+*
+*******************************************************************************/
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm8s.h"
+#include "quickaccess.h"
+#include "cpucom.h"
+
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+#define CPU_CLK_HIZ	GPIOE_ODR bset GPIO_PIN_7;
+#define CPU_CLK_LOW	GPIOE_ODR bclr GPIO_PIN_7;
+
+#define CPU_DIO_HIZ	GPIOD_ODR bset GPIO_PIN_7;
+#define CPU_DIO_LOW	GPIOD_ODR bclr GPIO_PIN_7;
+
+/* Private variables ---------------------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+
+/**
+  * @brief  
+  * @param  None
+  * @retval None
+  */
+void masterCpu_Wait(void)
+{
+	unsigned char wait;
+
+	for (wait = 0; wait < 2; wait++)
+	{
+		_asm("nop\n");
+	}
+
+}	
+
+
+/**
+  * @brief  set a Display Start Condition
+  * @param  None
+  * @retval None
+  */
+void masterCpu_setStart(void)
+{
+	DISP_CLK_HIZ	//CLK	= 1
+	Disp_Wait();
+	DISP_DIO_LOW	//DIO = 0
+	Disp_Wait();
+}	
+
+/**
+  * @brief  set a Display Stop Condition
+  * @param  None
+  * @retval None
+  */
+void masterCpu_setStop(void)
+{
+	DISP_CLK_LOW	//CLK	= 0
+	Disp_Wait();
+	DISP_DIO_LOW	//DIO	= 0
+	Disp_Wait();
+	DISP_CLK_HIZ	//CLK	= 1
+	Disp_Wait();
+	DISP_DIO_HIZ	//DIO	= 1
+	Disp_Wait();
+}	
+
+
+/**
+  * @brief  send Byte to Display and receive Acknowledge
+  * @param  Byte to send
+  * @retval Ack ( 1 = good)
+  */
+unsigned char masterCpu_sendByte(unsigned char byte)
+{
+	unsigned char bitcnt;
+	unsigned char Ack=0;
+	for(bitcnt = 0; bitcnt < 8; bitcnt++)
+	{
+		DISP_CLK_LOW	//CLK	= 0
+		if (byte&1)	DISP_DIO_HIZ	//DIO	= 1
+		else				DISP_DIO_LOW	//DIO = 0
+		byte = byte >> 1;
+		DISP_CLK_HIZ	//CLK	= 1
+		Disp_Wait();
+		Disp_Wait();
+}
+	DISP_CLK_LOW	//CLK	= 0
+	DISP_DIO_HIZ	//DIO	= 1
+	Disp_Wait();
+	//if (GPIO_ReadInputPin(DISP_DIO)==RESET) Ack=1;
+	if (!(GPIOD_ODR & GPIO_PIN_7)) Ack = 1;
+	DISP_DIO_LOW	//DIO	= 0
+	DISP_CLK_HIZ	//CLK	= 1
+	Disp_Wait();
+	return Ack;
+
+}
+
+
+/**
+  * @brief
+  * @param	on_off = 0/1; brightness = 0-7
+  * @retval
+  */
+void masterCpu_Ctrl(unsigned char on_off, unsigned char brightness)
+{
+
+	// Set Start-Condition
+	Disp_setStart();
+	// Display control command: "Set pulse width 1/16" / "Display on"
+	Disp_sendByte(0x80+8*(on_off&1)+(brightness&7));
+	// Set Stop-Condition
+	Disp_setStop();
+
+}
+
+
+
+
+/* Display Init -----------------------------------------------*/
+void masterCpu_init(void)
+{
+
+// Display CLK -> Output open-drain, low level, 10MHz
+	GPIO_Init(GPIOE, GPIO_PIN_7, GPIO_MODE_OUT_OD_HIZ_FAST);
+	// Display DIO -> Output open-drain, low level, 10MHz
+	GPIO_Init(GPIOD, GPIO_PIN_7, GPIO_MODE_OUT_OD_HIZ_FAST);
+
+	Disp_Print("    ");
+	Disp_Ctrl(1, 7);
+
+}	
+
+
+
