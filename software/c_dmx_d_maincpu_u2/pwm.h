@@ -22,8 +22,11 @@
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported variables---------------------------------------------------------*/
-extern volatile unsigned int pwmOut[24];
-extern volatile unsigned char pwmFreq;		// 1 = 2KHz, 2 = 1KHz, 3= 500Hz
+extern volatile unsigned char dimOut[24];
+extern volatile unsigned char pwmFreq;		// 0 = 2KHz, 1 = 1KHz, 2= 500Hz, 3= 250Hz
+extern volatile unsigned char pwmCurve;	// 0 = Linear Curve
+
+extern volatile unsigned int debug1;
 
 /* Exported functions ------------------------------------------------------- */
 extern void TIM_PWM_Update(void);

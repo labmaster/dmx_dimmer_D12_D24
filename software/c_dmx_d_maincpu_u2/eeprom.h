@@ -21,6 +21,15 @@
 /* Exported constants --------------------------------------------------------*/
 
 /* Exported macro ------------------------------------------------------------*/
+#define	EEPADR_SIGNATURE1				0x00
+#define	EEPADR_SIGNATURE2				0x01
+#define	EEPADR_VERSION					0x02
+#define	EEPADR_DMXFreq					0x03
+#define	EEPADR_DMXCurve					0x04
+#define	EEPADR_DMXChannels			0x05
+#define	EEPADR_DMXStartAdr_H		0x06	
+#define	EEPADR_DMXStartAdr_L		0x07
+
 
 /* Exported variables---------------------------------------------------------*/
 

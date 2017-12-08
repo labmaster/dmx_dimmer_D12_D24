@@ -14,6 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm8s.h"
 #include "hardware.h"
+#include "quickaccess.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -22,6 +23,7 @@
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
+volatile unsigned char jumperConfig;
 
 /**
   * @brief  Configure system clock to run at 16MHz clock speed and output the 
@@ -51,6 +53,29 @@ void CLK_Config(void)
 
 }
 
+
+/**
+  * @brief  check for 0Ohm jumper resistors on PD5 and PF4
+  * @param  None
+  * @retval None
+  */
+unsigned char void Check_Jumpers(void)
+{
+unsigned char jumpers;
+
+	// first set open ports to pullup on PD5 and PF4
+	GPIO_Init(GPIOD, GPIO_PIN_5, GPIO_MODE_IN_PU_NO_IT);		
+	GPIO_Init(GPIOF, GPIO_PIN_4, GPIO_MODE_IN_PU_NO_IT);		
+
+	jumpers = (GPIOD_IDR & 0x20) | (GPIOF_IDR & 0x10);
+	jumpers = jumpers >> 4;
+	jumpers = jumpers ^ 0xff; // invert all jumper bits;
+	return jumpers;
+
+}
+
+
+
 /**
   * @brief  Configure GPIOs that only used by direct port actions
   * @param  None
@@ -64,6 +89,19 @@ void GPIO_Config(void)
 	GPIO_DeInit(GPIOC);
 	GPIO_DeInit(GPIOD);
 	GPIO_DeInit(GPIOE);
+	GPIO_DeInit(GPIOF);
+
+	// set open portpins to pullup (see schematic)
+	// !!! Do not let them float !!!
+	// PA2
+	GPIO_Init(GPIOA, GPIO_PIN_2, GPIO_MODE_IN_PU_NO_IT);		
+	// PC5
+	GPIO_Init(GPIOC, GPIO_PIN_5, GPIO_MODE_IN_PU_NO_IT);		
+	// PE5
+	GPIO_Init(GPIOE, GPIO_PIN_5, GPIO_MODE_IN_PU_NO_IT);		
+
+	// check jumper resitors for getting infomation if CPU is soldered on U3 or U4
+	jumperConfig = Check_Jumpers();
 
 	// CPU BusData bits -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOB, GPIO_PIN_ALL, GPIO_MODE_OUT_PP_LOW_FAST );

@@ -19,10 +19,9 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-const unsigned char EEvar[25]={
-	0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
-	//50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74
-};	
+//const unsigned char EEvar[25]={
+//	0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+//};	
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -108,7 +107,7 @@ void EEReadArray(unsigned int address, unsigned char * dest, unsigned char count
 {
 	unsigned char i;
 	//  read the data from EEPROM.
-	unsigned char *EEAddress  = (unsigned char *) (FLASH_DATA_START_PHYSICAL_ADDRESS + address);        //  EEPROM base address.
+	unsigned char *EEAddress  = (unsigned char *) (FLASH_DATA_START_PHYSICAL_ADDRESS + address); //  EEPROM base address.
 	for (i=0; i<count; i++)
 	{
 		dest[i] = *EEAddress;
@@ -116,7 +115,7 @@ void EEReadArray(unsigned int address, unsigned char * dest, unsigned char count
 	}	
 }
 
-
+#define	EEP_VERSION							0x07
 /**
   * @brief initialize eeprom content
   * @param None
@@ -126,13 +125,21 @@ void initEE(void)
 {
 	FLASH_Config();
 
-	if ((EEReadByte(0)!=0xAE) || (EEReadByte(1)!=0x5A))
+	// wrong or no signature ? then initialize eeprom.
+	if ((EEReadByte(EEPADR_SIGNATURE1) != 0xAE) || 
+			(EEReadByte(EEPADR_SIGNATURE2) != 0x5A) || 
+			(EEReadByte(EEPADR_VERSION) != EEP_VERSION))
 	{
+		EEWriteByte(EEPADR_DMXFreq, 0);				// 2000KHz
+		EEWriteByte(EEPADR_DMXCurve, 0);				// Linear Dim Kurve
+		EEWriteByte(EEPADR_DMXChannels, 24);		// 24 Channels
+		EEWriteByte(EEPADR_DMXStartAdr_H, 0);	// Start at DMX addresse 0
+		EEWriteByte(EEPADR_DMXStartAdr_L, 0);
 
-		EEWriteArray(2, EEvar, 25);
-
-		EEWriteByte(0, 0xAE);
-		EEWriteByte(1, 0x5A);
+		// write signatures and version at the end
+		EEWriteByte(EEPADR_SIGNATURE1, 0xAE);
+		EEWriteByte(EEPADR_SIGNATURE2, 0x5A);
+		EEWriteByte(EEPADR_VERSION, EEP_VERSION);
 
 	}
 }

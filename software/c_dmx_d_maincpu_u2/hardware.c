@@ -64,7 +64,19 @@ void GPIO_Config(void)
 	GPIO_DeInit(GPIOC);
 	GPIO_DeInit(GPIOD);
 	GPIO_DeInit(GPIOE);
+	GPIO_DeInit(GPIOG);
 
+	// set open portpins to pullup (see schematic)
+	// !!! Do not let them float !!!
+	// PA3
+	GPIO_Init(GPIOA, GPIO_PIN_3, GPIO_MODE_IN_PU_NO_IT);		
+	// PC5, PC6, PC7
+	GPIO_Init(GPIOC, GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7, GPIO_MODE_IN_PU_NO_IT);		
+	// PE3, PE5
+	GPIO_Init(GPIOE, GPIO_PIN_3 | GPIO_PIN_5, GPIO_MODE_IN_PU_NO_IT);		
+	// PG0, PG1
+	GPIO_Init(GPIOG, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_IN_PU_NO_IT);		
+	
 
 	// Button PortPins -> Input pull-up, no external interrupt
 	//GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 , GPIO_MODE_IN_PU_NO_IT);	

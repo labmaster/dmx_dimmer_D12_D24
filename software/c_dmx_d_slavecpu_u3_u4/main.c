@@ -20,7 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "stm8s.h"
-//#include "quickaccess.h"
+#include "quickaccess.h"
 #include "main.h"
 //#include "hardware.h"
 //#include "pwm.h"

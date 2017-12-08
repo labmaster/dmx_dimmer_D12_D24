@@ -52,6 +52,33 @@
 #define	EXTI_CR1		(*(__IO uint8_t *)(EXTI_BaseAddress + 0))  
 #define	EXTI_CR2		(*(__IO uint8_t *)(EXTI_BaseAddress + 1))  
 
+#define TIM1_CCR1H	(*(__IO uint8_t *)(TIM1_BaseAddress + 21))
+#define TIM1_CCR1L	(*(__IO uint8_t *)(TIM1_BaseAddress + 22))
+#define TIM1_CCR2H	(*(__IO uint8_t *)(TIM1_BaseAddress + 23))
+#define TIM1_CCR2L	(*(__IO uint8_t *)(TIM1_BaseAddress + 24))
+#define TIM1_CCR3H	(*(__IO uint8_t *)(TIM1_BaseAddress + 25))
+#define TIM1_CCR3L	(*(__IO uint8_t *)(TIM1_BaseAddress + 26))
+#define TIM1_CCR4H	(*(__IO uint8_t *)(TIM1_BaseAddress + 27))
+#define TIM1_CCR4L	(*(__IO uint8_t *)(TIM1_BaseAddress + 28))
+
+#define TIM2_CCR1H	(*(__IO uint8_t *)(TIM2_BaseAddress + 15))
+#define TIM2_CCR1L	(*(__IO uint8_t *)(TIM2_BaseAddress + 16))
+#define TIM2_CCR2H	(*(__IO uint8_t *)(TIM2_BaseAddress + 17))
+#define TIM2_CCR2L	(*(__IO uint8_t *)(TIM2_BaseAddress + 18))
+#define TIM2_CCR3H	(*(__IO uint8_t *)(TIM2_BaseAddress + 19))
+#define TIM2_CCR3L	(*(__IO uint8_t *)(TIM2_BaseAddress + 20))
+
+#define TIM3_CCR1H	(*(__IO uint8_t *)(TIM3_BaseAddress + 13))
+#define TIM3_CCR1L	(*(__IO uint8_t *)(TIM3_BaseAddress + 14))
+#define TIM3_CCR2H	(*(__IO uint8_t *)(TIM3_BaseAddress + 15))
+#define TIM3_CCR2L	(*(__IO uint8_t *)(TIM3_BaseAddress + 16))
+
+
+
+
+
+
+
 
 #endif  /* _QUICKACCESS_H */
 

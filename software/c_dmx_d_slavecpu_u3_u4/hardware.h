@@ -22,6 +22,7 @@
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported variables---------------------------------------------------------*/
+extern volatile unsigned char jumperConfig;
 
 /* Exported functions ------------------------------------------------------- */
 extern void initHardware(void);

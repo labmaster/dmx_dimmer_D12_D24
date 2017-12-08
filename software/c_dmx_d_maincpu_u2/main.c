@@ -41,21 +41,28 @@ void main(void)
 	char lcdText[10];
 	unsigned char readEEP;
 	unsigned char cnt;
+	unsigned int dmxStartAddress;
 
 	initHardware();
-	initPWM();
 	initDMX();
-	initEE();
-	initDisp();
 
+	initEE();
+	pwmFreq = EEReadByte(EEPADR_DMXFreq);
+	pwmCurve = EEReadByte(EEPADR_DMXCurve);			
+	dmxStartAddress = EEReadByte(EEPADR_DMXStartAdr_H) << 8 | EEReadByte(EEPADR_DMXStartAdr_L);
+
+	initPWM();
+
+	initDisp();
+	
 	/* Enable general interrupts ----------------------------------*/
 	enableInterrupts();    
 	
 
 	
 
-	Disp_Print("0001");
-	Disp_Ctrl(DISP_ON, 7);
+	//Disp_Print("0001");
+	//Disp_Ctrl(DISP_ON, 7);
 
 	//EEWriteByte(11, 173);
 
@@ -76,23 +83,31 @@ void main(void)
 	}
 */
 
+	sprintf(lcdText, "%*u", 3, (unsigned int)DMXin[57]);
+	Disp_Print(lcdText);
+	
 	
 	
 	while(1)
 	{
-		GPIOA_ODR bset GPIO_PIN_6;
+
 		if (DMXnew){
 
-			//_delay_us(200);
-			GPIOA_ODR bset GPIO_PIN_5;			
-
-			sprintf(lcdText, "%*u", 3, (unsigned int)DMXin[57]);
+			GPIOA_ODR bset GPIO_PIN_6;
+			for (cnt = 0; cnt < 24; cnt++)
+			{
+				dimOut[cnt] = DMXin[cnt+1+dmxStartAddress];	
+			}
+			TIM_PWM_Update();
+			GPIOA_ODR bclr GPIO_PIN_6;
+	
+			//sprintf(lcdText, "%*u", 3, (unsigned int)debug1);
+			//sprintf(lcdText, "% 4X", (unsigned int)debug1);
 			Disp_Print(lcdText);
-			DMXnew = 0x00;
 
-			GPIOA_ODR bclr GPIO_PIN_5;
+			DMXnew = 0x00;
 		}
-		GPIOA_ODR bclr GPIO_PIN_6;
+
 		
 }
 
