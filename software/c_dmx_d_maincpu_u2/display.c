@@ -242,7 +242,7 @@ void initDisp(void)
 	GPIO_Init(GPIOD, GPIO_PIN_7, GPIO_MODE_OUT_OD_HIZ_FAST);
 
 	Disp_Print("    ");
-	Disp_Ctrl(1, 7);
+	Disp_Ctrl(DISP_ON, 7);
 
 }	
 

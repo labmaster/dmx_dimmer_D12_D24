@@ -2,7 +2,7 @@
 * File Name          : pwm.c
 * Author             : W. Meyer
 * Date First Issued  : 01/11/2017
-* Description        : This file provides functions for init of chip
+* Description        : This file provides functions for generating PWM Output
 ********************************************************************************
 * History:
 *  01/11/2017 : pwm init/config
@@ -29,6 +29,7 @@
 #include "stm8s.h"
 #include "pwm.h"
 #include "quickaccess.h"
+#include "delay.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -38,6 +39,11 @@
 volatile unsigned char dimOut[24];
 volatile unsigned char pwmFreq = 1;	// 0 = 2KHz, 1 = 1KHz, 2 = 500Hz, 3 = 250Hz
 volatile unsigned char pwmCurve = 0;	// 0 = Linear Curve
+volatile unsigned char 	Main1msFlag=0x00;
+volatile unsigned char 	Main20msFlag=0x00;
+volatile unsigned char 	Main100msFlag=0x00;
+volatile unsigned char  Main250msFlag=0x00;
+volatile unsigned char  Main1000msFlag=0x00;
 
 volatile unsigned int debug1;
 
@@ -370,7 +376,7 @@ void TIM_PWM_Update(void)
 		tmp = GammaTable[pwmFreq][dimOut[0]];
 		TIM1_CCR1H = (uint8_t)(tmp >> 8);
 		TIM1_CCR1L = (uint8_t)(tmp);
-		//debug1 = tmp;
+		debug1 = tmp;
 		// PWM Channel 1
 		//TIM1_SetCompare2(GammaTable[freq][pwmOut[1]]);
 		tmp = GammaTable[pwmFreq][dimOut[1]];
@@ -420,7 +426,7 @@ void TIM_PWM_Update(void)
 		tmp = LinearTable[pwmFreq][dimOut[0]];
 		TIM1_CCR1H = (uint8_t)(tmp >> 8);
 		TIM1_CCR1L = (uint8_t)(tmp);
-
+		debug1 = tmp;
 		// PWM Channel 1
 		//TIM1_SetCompare2(GammaTable[freq][pwmOut[1]]);
 		tmp = LinearTable[pwmFreq][dimOut[1]];
@@ -599,17 +605,23 @@ void TIM2_Config(void)
   TIM2_OC2PreloadConfig(ENABLE);
 
 
-	/* : Channel3 */ 
-/*
-	TIM2_OC3Init(	TIM2_OCMODE_PWM1,
-								TIM2_OUTPUTSTATE_ENABLE,
-								pwmOut[6],
+
+/* : Channel3 used as fixed interrupt timing source*/ 
+	TIM2_OC3Init(	TIM2_OCMODE_ACTIVE,
+								TIM2_OUTPUTSTATE_DISABLE,
+								3999,
 								TIM2_OCPOLARITY_HIGH
 							);
-  TIM2_OC3PreloadConfig(ENABLE);
-*/
+  TIM2_OC3PreloadConfig(DISABLE);
 
-  TIM2_ARRPreloadConfig(ENABLE);
+	/* set the Interrupt priority to IRQ priority 1 */
+	ITC_SetSoftwarePriority(ITC_IRQ_TIM4_OVF, ITC_PRIORITYLEVEL_1);	
+
+	TIM2_ITConfig(TIM2_IT_CC3, ENABLE);
+
+
+
+	TIM2_ARRPreloadConfig(ENABLE);
 
   /* TIM2 enable counter */
   TIM2_Cmd(ENABLE);
@@ -672,7 +684,151 @@ void initPWM(void){
   /* TIM3 configuration -----------------------------------------*/
 	TIM3_Config();
 	/* DMX Receive configuration ----------------------------------*/
-
-	
 	
 }	
+
+
+
+//*************************************************************************************************
+//TIM2 Channel3 IRQ
+//*************************************************************************************************
+/**
+  * @brief Timer2 Capture/Compare Interrupt routine.
+  * @param  None
+  * @retval None
+  */
+INTERRUPT_HANDLER(TIM2_CAP_COM_IRQHandler, 14)
+{
+
+static volatile unsigned char cnt = 0;	
+static volatile unsigned long msCnt = 0;	
+static volatile unsigned char comp_1ms = 1;
+static volatile unsigned char comp_20ms = 5;
+static volatile unsigned char comp_100ms = 11;
+static volatile unsigned char comp_250ms = 13;
+static volatile unsigned int comp_1000ms = 37;
+
+
+	TIM2_SR1 bclr TIM2_SR1_CC3IF;	// reset interrupt pending bit
+
+	GPIOA_ODR bset GPIO_PIN_6;
+
+	//----------------------------------------------------
+	// 0,5ms cycles	
+
+	switch (cnt&1)
+	{
+		case 0:
+			//----------------------------------------------------
+			// 1ms cycles
+			if (comp_1ms==1)
+			{
+					comp_1ms=0;
+					Main1msFlag=0xff;
+		
+		
+			}
+		
+		
+			//----------------------------------------------------
+			// 20ms cycles
+			if (comp_20ms==20)
+			{
+				comp_20ms=0;
+				Main20msFlag=0xff;
+		/*
+				if (GETBUTTON){
+					if (ButtonOn < 3000) ButtonOn++;
+					ButtonOffOld = ButtonOff;								
+					ButtonOff = 0;					
+				}
+				else{
+					if (ButtonOff < 3000) ButtonOff++;
+					ButtonOnOld = ButtonOn;								
+					ButtonOn = 0;		
+				}	
+		*/		
+			}
+		
+		
+			//----------------------------------------------------
+			if (comp_100ms==100)
+			{
+				comp_100ms=0;
+				Main100msFlag=0xff;
+		
+		
+			}
+		
+			//----------------------------------------------------
+			if (comp_250ms==250)
+			{
+				comp_250ms=0;
+				Main250msFlag=0xff;
+		
+				
+			}
+		
+		
+			//----------------------------------------------------
+			if (comp_1000ms==1000)
+			{
+				comp_1000ms=0;
+				Main1000msFlag=0xff;
+		
+				
+			}
+		
+		
+			//---------------------------------------------------------------------------------
+			++msCnt;	// increment ms counter
+		
+			//---------------------------------------------------------------------------------
+			++comp_1ms;
+			++comp_20ms;
+			++comp_100ms;
+			++comp_250ms;
+			++comp_1000ms;
+
+		break;
+	}
+	cnt++;
+
+	GPIOA_ODR bclr GPIO_PIN_6;
+
+
+}
+
+/*
+
+//*******************************************************************************
+//* Function Name  : SetDelay
+//* Description    : 
+//*******************************************************************************
+u32 SetDelay (u32 msTime){
+  return(msCnt + msTime - 1);
+}
+
+//*******************************************************************************
+//* Function Name  : CheckDelay
+//* Description    : 
+//*******************************************************************************
+s8 CheckDelay(u32 msTime){
+  return(((msTime - msCnt) & 0x80000000) >> 24);	// check sign bit
+}
+
+//*******************************************************************************
+//* Function Name  : waitus
+//* Description    : 
+//*******************************************************************************
+void msDelay(u32 msWait){
+	u32 stopTime;
+	stopTime = SetDelay(msWait);
+	while (!CheckDelay(stopTime));
+}
+
+
+*/
+
+
+

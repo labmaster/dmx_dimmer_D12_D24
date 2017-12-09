@@ -22,9 +22,9 @@
 #include "stm8s.h"
 #include "quickaccess.h"
 #include "main.h"
-//#include "hardware.h"
-//#include "pwm.h"
-//#include "delay.h"
+#include "hardware.h"
+#include "pwm.h"
+#include "delay.h"
 
 
 /**
@@ -35,7 +35,15 @@
 void main(void)
 {
 
+	initHardware();
+	initPWM();
 
+	/* Enable general interrupts ----------------------------------*/
+	enableInterrupts();    
 
+	while(1){
+		_delay_ms(100);
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+	}
 
 }

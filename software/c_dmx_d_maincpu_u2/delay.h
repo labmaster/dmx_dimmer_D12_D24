@@ -24,7 +24,7 @@
 {
 #if defined(__CSMC__)
 /* COSMIC */
-  #define T_COUNT(x) (( F_CPU * x / 1000000UL )-3)/3)
+  #define T_COUNT(x) (( 16UL * x )-3)/3)
 	// ldw X, __ticks ; insert automaticaly
 	_asm("nop\n $N:\n decw X\n jrne $L\n nop\n ", __ticks);
 #else
@@ -41,7 +41,10 @@
 {
 	while ( __ms-- )
 	{
-		_delay_us( 1000 );
+		_delay_us( 250 );
+		_delay_us( 250 );
+		_delay_us( 250 );
+		_delay_us( 250 );
 	}
 }
 

@@ -2,7 +2,7 @@
 * File Name          : dmx.c
 * Author             : W. Meyer
 * Date First Issued  : 01/11/2017
-* Description        : This file provides functions for init of chip
+* Description        : This file provides functions for DMX comunications
 ********************************************************************************
 * History:
 *  01/11/2017 : initial tests

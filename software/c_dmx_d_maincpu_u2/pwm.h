@@ -25,8 +25,18 @@
 extern volatile unsigned char dimOut[24];
 extern volatile unsigned char pwmFreq;		// 0 = 2KHz, 1 = 1KHz, 2= 500Hz, 3= 250Hz
 extern volatile unsigned char pwmCurve;	// 0 = Linear Curve
+extern volatile unsigned long msCnt;	
+extern volatile unsigned char Main1msFlag;
+extern volatile unsigned char Main20msFlag;
+extern volatile unsigned char Main100msFlag;
+extern volatile unsigned char Main250msFlag;
+extern volatile unsigned char Main1000msFlag;
+
+
 
 extern volatile unsigned int debug1;
+
+
 
 /* Exported functions ------------------------------------------------------- */
 extern void TIM_PWM_Update(void);

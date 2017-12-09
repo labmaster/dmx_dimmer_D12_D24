@@ -55,11 +55,105 @@ void CLK_Config(void)
 
 
 /**
+  * @brief  Measure the LSI frequency using TIM3 CHANNEL1 and update the calibration registers.
+  * @note
+  * @param  None
+  * @retval LsiFrequency
+  */
+static uint32_t LSIMeasurment(void)
+{
+  uint32_t lsi_freq_hz = 0x0;
+  uint32_t fmaster = 0x0;
+  uint16_t ICValue1 = 0x0;
+  uint16_t ICValue2 = 0x0;
+
+  /* Get master frequency */
+  fmaster = CLK_GetClockFreq();
+
+  /* Enable the LSI measurement: LSI clock connected to timer Input Capture 1 */
+  AWU->CSR |= AWU_CSR_MSR;
+
+  /* Measure the LSI frequency with TIMER Input Capture 1 */
+  
+  /* Capture only every 8 events!!! */
+  /* Enable capture of TI1 */
+  TIM3_ICInit(TIM3_CHANNEL_1, TIM3_ICPOLARITY_RISING, TIM3_ICSELECTION_DIRECTTI,
+              TIM3_ICPSC_DIV8, 0);
+
+  /* Enable TIM3 */
+  TIM3_Cmd(ENABLE);
+
+  /* wait a capture on cc1 */
+  while ((TIM3->SR1 & TIM3_FLAG_CC1) != TIM3_FLAG_CC1);
+  /* Get CCR1 value*/
+  ICValue1 = TIM3_GetCapture1();
+  TIM3_ClearFlag(TIM3_FLAG_CC1);
+
+  /* wait a capture on cc1 */
+  while ((TIM3->SR1 & TIM3_FLAG_CC1) != TIM3_FLAG_CC1);
+    /* Get CCR1 value*/
+  ICValue2 = TIM3_GetCapture1();
+  TIM3_ClearFlag(TIM3_FLAG_CC1);
+
+  /* Disable IC1 input capture */
+  TIM3->CCER1 &= (uint8_t)(~TIM3_CCER1_CC1E);
+  /* Disable timer3 */
+  TIM3_Cmd(DISABLE);
+
+  /* Compute LSI clock frequency */
+  lsi_freq_hz = (8 * fmaster) / (ICValue2 - ICValue1);
+  
+  /* Disable the LSI measurement: LSI clock disconnected from timer Input Capture 1 */
+  AWU->CSR &= (uint8_t)(~AWU_CSR_MSR);
+
+	return (lsi_freq_hz);
+
+}
+
+
+/**
+  * @brief  Configures the IWDG to generate a Reset if it is not refreshed at the
+  *         correct time. 
+  * @param  None
+  * @retval None
+  */
+static void IWDG_Config(void)
+{
+	uint32_t LsiFreq;
+	LsiFreq = LSIMeasurment();
+
+	/* Enable IWDG (the LSI oscillator will be enabled by hardware) */
+  IWDG_Enable();
+  
+  /* IWDG timeout equal to 250 ms (the timeout may varies due to LSI frequency
+     dispersion) */
+  /* Enable write access to IWDG_PR and IWDG_RLR registers */
+  IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+  
+  /* IWDG counter clock: LSI/64 */
+  IWDG_SetPrescaler(IWDG_Prescaler_64);
+  
+  /* Set counter reload value to obtain 250ms IWDG Timeout.
+    Counter Reload Value = 250ms/IWDG counter clock period
+                         = 250ms / (LSI/64)
+                         = 0.25s / (LsiFreq/128)
+                         = LsiFreq/(128 * 4)
+                         = LsiFreq/512
+   */
+
+	IWDG_SetReload((uint8_t)(LsiFreq/512));
+  
+  /* Reload IWDG counter */
+  IWDG_ReloadCounter();
+}
+
+
+/**
   * @brief  check for 0Ohm jumper resistors on PD5 and PF4
   * @param  None
   * @retval None
   */
-unsigned char void Check_Jumpers(void)
+unsigned char Check_Jumpers(void)
 {
 unsigned char jumpers;
 
@@ -138,6 +232,9 @@ void initHardware(void){
 	CLK_Config();    
 	/* GPIO Configuration  ----------------------------------------*/
 	GPIO_Config();  
+	/* IWDG Configuration -----------------------------------------*/
+	IWDG_Config();
+
 
 }
 

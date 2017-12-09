@@ -22,7 +22,7 @@
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported variables---------------------------------------------------------*/
-
+extern volatile unsigned long  debug2;
 /* Exported functions ------------------------------------------------------- */
 extern void initHardware(void);
 

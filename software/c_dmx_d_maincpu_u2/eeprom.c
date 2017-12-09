@@ -2,7 +2,7 @@
 * File Name          : eeprom.c
 * Author             : W. Meyer
 * Date First Issued  : 21/11/2017
-* Description        : This file provides functions for init of chip
+* Description        : This file provides functions for eeprom handling
 ********************************************************************************
 * History:
 *  21/11/2017 : initial test

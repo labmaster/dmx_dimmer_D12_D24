@@ -41,11 +41,11 @@ void main(void)
 	char lcdText[10];
 	unsigned char readEEP;
 	unsigned char cnt;
+	unsigned char i;
 	unsigned int dmxStartAddress;
 
 	initHardware();
 	initDMX();
-
 	initEE();
 	pwmFreq = EEReadByte(EEPADR_DMXFreq);
 	pwmCurve = EEReadByte(EEPADR_DMXCurve);			
@@ -58,100 +58,76 @@ void main(void)
 	/* Enable general interrupts ----------------------------------*/
 	enableInterrupts();    
 	
+	GPIOA_ODR bset GPIO_PIN_5;
+	GPIOA_ODR bclr GPIO_PIN_5;
+	GPIOA_ODR bset GPIO_PIN_5;
+	GPIOA_ODR bclr GPIO_PIN_5;
+	GPIOA_ODR bset GPIO_PIN_5;
+	GPIOA_ODR bclr GPIO_PIN_5;
+	GPIOA_ODR bset GPIO_PIN_5;
+	GPIOA_ODR bclr GPIO_PIN_5;
+	GPIOA_ODR bset GPIO_PIN_5;
+	GPIOA_ODR bclr GPIO_PIN_5;
 
-	
 
-	//Disp_Print("0001");
-	//Disp_Ctrl(DISP_ON, 7);
+	//sprintf(lcdText, "% 4X", (unsigned int)debug2);
+	//Disp_Print(lcdText);
 
-	//EEWriteByte(11, 173);
 
-/*
-	while (1){
-
-		Disp_Print(" ON ");
-		_delay_ms(2000);
-		for(cnt = 0; cnt < 25; cnt++){
-	
-			sprintf(lcdText, "%*u", 3, (unsigned int)EEReadByte(cnt));
-			Disp_Print(lcdText);
-			_delay_ms(800);	
-		}
-		Disp_Print(" OFF");
-		_delay_ms(2000);	
-		
-	}
-*/
-
-	sprintf(lcdText, "%*u", 3, (unsigned int)DMXin[57]);
-	Disp_Print(lcdText);
-	
-	
-	
 	while(1)
 	{
 
 		if (DMXnew){
 
-			GPIOA_ODR bset GPIO_PIN_6;
+			//GPIOA_ODR bset GPIO_PIN_6;
 			for (cnt = 0; cnt < 24; cnt++)
 			{
 				dimOut[cnt] = DMXin[cnt+1+dmxStartAddress];	
 			}
 			TIM_PWM_Update();
-			GPIOA_ODR bclr GPIO_PIN_6;
+			//GPIOA_ODR bclr GPIO_PIN_6;
 	
 			//sprintf(lcdText, "%*u", 3, (unsigned int)debug1);
 			//sprintf(lcdText, "% 4X", (unsigned int)debug1);
-			Disp_Print(lcdText);
-
+			//Disp_Print(lcdText);
+			//_delay_ms(2000);	
 			DMXnew = 0x00;
 		}
 
-		
-}
-
-
-
-	while (1)
-	{
-
-
-/*
-		if(us256Count & 0x400){
-			pwmOut[0] = (us256Count & 0x3FF) * 7;
-			pwmOut[1] = (us256Count & 0x3FF) * 7;
-			pwmOut[2] = (us256Count & 0x3FF) * 7;
-			pwmOut[3] = (us256Count & 0x3FF) * 7;
-			pwmOut[4] = (us256Count & 0x3FF) * 7;
-			pwmOut[5] = (us256Count & 0x3FF) * 7;
-			pwmOut[6] = (us256Count & 0x3FF) * 7;
-			pwmOut[7] = (us256Count & 0x3FF) * 7;
-
-			//TIM_PWM_Update();	
-
-
-			Disp_Ctrl(DISP_ON, 7);
-
-		}			
-		else{
-			
-			Disp_Ctrl(DISP_OFF, 7);			
-			
+		if (Main1000msFlag){
+			Main1000msFlag = 0x00;
+			if (i & 1)	sprintf(lcdText, "% 4X", (unsigned int)(debug2>>0));
+			else				sprintf(lcdText, "% 4X", (unsigned int)(debug2>>16));
+			Disp_Print(lcdText);
+			i++;
 		}
+
+
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+/*
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
+		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+		_delay_ms(100);	
 */
 
-
-
-		_asm("nop\n");
 	}
-
-	/* Disable the UART1 Receive interrupt */
-	UART3_ITConfig(UART3_IT_RXNE_OR, DISABLE);
-
-	/* Disable general interrupts */
-	disableInterrupts();    
-
+		//_asm("nop\n");
 
 }
 
