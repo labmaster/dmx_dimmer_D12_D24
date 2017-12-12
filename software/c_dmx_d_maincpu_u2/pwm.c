@@ -36,9 +36,15 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
-volatile unsigned char dimOut[24];
-volatile unsigned char pwmFreq = 1;	// 0 = 2KHz, 1 = 1KHz, 2 = 500Hz, 3 = 250Hz
+volatile unsigned short dimOut[24];
+volatile unsigned short dimIn[24];
+volatile unsigned char pwmFreq = 0;	// 0 = 2KHz, 1 = 1KHz, 2 = 500Hz, 3 = 250Hz
 volatile unsigned char pwmCurve = 0;	// 0 = Linear Curve
+
+volatile unsigned char extPWMchH[16];
+volatile unsigned char extPWMchL[16];
+
+
 volatile unsigned char 	Main1msFlag=0x00;
 volatile unsigned char 	Main20msFlag=0x00;
 volatile unsigned char 	Main100msFlag=0x00;
@@ -344,19 +350,66 @@ const unsigned int LinearTable[4][256]=
   * @param  None
   * @retval (unsigned int) reload value
   */
-unsigned int TIM_Get_Reload(void)
+unsigned int TIM_pwmFreq2Period(unsigned char freq)
 {
 
 	unsigned int period;
 
-	if (pwmFreq > 3)	period = 3;
-	else							period = pwmFreq;
-	period = (LinearTable[0][255] + 1) * (1 << period) - 1;
+	period = freq;
+	if (freq > 3)	period = 3;
+	period = 8000 * (1 << period) - 1;
 
 	return period;
 
 }
 
+
+
+@inline unsigned short getGammaValue(unsigned short input)
+{
+
+unsigned short pointL;
+unsigned short pointH;
+
+unsigned char lbyte;
+unsigned char hbyte;
+unsigned char hbyte_;
+
+
+	hbyte = (input & 0xFF00) >> 8;
+	lbyte = (input & 0x00FF);
+
+	pointL = GammaTable[pwmFreq][hbyte];
+	if (hbyte != 255) hbyte++;
+	pointH = GammaTable[pwmFreq][hbyte];
+	
+	return pointL + ((((pointH - pointL) * lbyte)  + 128) >> 8); 
+
+}
+
+
+
+@inline unsigned short getLinearValue(unsigned short input)
+{
+
+unsigned short pointL;
+unsigned short pointH;
+
+unsigned char lbyte;
+unsigned char hbyte;
+unsigned char hbyte_;
+
+
+	hbyte = (input & 0xFF00) >> 8;
+	lbyte = (input & 0x00FF);
+
+	pointL = LinearTable[pwmFreq][hbyte];
+	if (hbyte != 255) hbyte++;
+	pointH = LinearTable[pwmFreq][hbyte];
+	
+	return pointL + ((((pointH - pointL) * lbyte)  + 128) >> 8); 
+
+}
 
 
 
@@ -367,112 +420,279 @@ unsigned int TIM_Get_Reload(void)
   */
 void TIM_PWM_Update(void)
 {
-	unsigned int  tmp;
-
+	unsigned short  tmp;
+	unsigned char  i;
 	if (pwmCurve)
 	{
 		// PWM Channel 0
-		//TIM1_SetCompare1(GammaTable[freq][pwmOut[0]]);
-		tmp = GammaTable[pwmFreq][dimOut[0]];
+		tmp = getGammaValue(dimOut[0]);
 		TIM1_CCR1H = (uint8_t)(tmp >> 8);
 		TIM1_CCR1L = (uint8_t)(tmp);
 		debug1 = tmp;
 		// PWM Channel 1
-		//TIM1_SetCompare2(GammaTable[freq][pwmOut[1]]);
-		tmp = GammaTable[pwmFreq][dimOut[1]];
+		tmp = getGammaValue(dimOut[1]);
 		TIM1_CCR2H = (uint8_t)(tmp >> 8);
 		TIM1_CCR2L = (uint8_t)(tmp);
 		
 		// PWM Channel 2
-		//TIM1_SetCompare3(GammaTable[freq][pwmOut[2]]);
-		tmp = GammaTable[pwmFreq][dimOut[2]];
+		tmp = getGammaValue(dimOut[2]);
 		TIM1_CCR3H = (uint8_t)(tmp >> 8);
 		TIM1_CCR3L = (uint8_t)(tmp);
 		
 		// PWM Channel 3
-		//TIM1_SetCompare4(GammaTable[freq][pwmOut[3]]);
-		tmp = GammaTable[pwmFreq][dimOut[3]];
+		tmp = getGammaValue(dimOut[3]);
 		TIM1_CCR4H = (uint8_t)(tmp >> 8);
 		TIM1_CCR4L = (uint8_t)(tmp);
 		
 		// PWM Channel 4
-		//TIM3_SetCompare2(GammaTable[freq][pwmOut[4]]);		
-		tmp = GammaTable[pwmFreq][dimOut[4]];
+		tmp = getGammaValue(dimOut[4]);
 		TIM3_CCR2H = (uint8_t)(tmp >> 8);
 		TIM3_CCR2L = (uint8_t)(tmp);
 		
 		// PWM Channel 5		
-		//TIM3_SetCompare1(GammaTable[freq][pwmOut[5]]);
-		tmp = GammaTable[pwmFreq][dimOut[5]];
+		tmp = getGammaValue(dimOut[5]);
 		TIM3_CCR1H = (uint8_t)(tmp >> 8);
 		TIM3_CCR1L = (uint8_t)(tmp);
 		
 		// PWM Channel 6
-		//TIM2_SetCompare2(GammaTable[freq][pwmOut[6]]);	
-		tmp = GammaTable[pwmFreq][dimOut[6]];
+		tmp = getGammaValue(dimOut[6]);
 		TIM2_CCR2H = (uint8_t)(tmp >> 8);
 		TIM2_CCR2L = (uint8_t)(tmp);
 		
 		// PWM Channel 7		
-		//TIM2_SetCompare1(GammaTable[freq][pwmOut[7]]);
-		tmp = GammaTable[pwmFreq][dimOut[7]];
+		tmp = getGammaValue(dimOut[7]);
 		TIM2_CCR1H = (uint8_t)(tmp >> 8);
 		TIM2_CCR1L = (uint8_t)(tmp);
+
+		// extern channels PWM generated on slave cpu's
+		// PWM Channel 8		
+		tmp = getGammaValue(dimOut[8]);
+		extPWMchH[0] =  (uint8_t)(tmp >> 8);
+		extPWMchL[0] =  (uint8_t)(tmp);
+
+		// PWM Channel 9		
+		tmp = getGammaValue(dimOut[9]);
+		extPWMchH[1] =  (uint8_t)(tmp >> 8);
+		extPWMchL[1] =  (uint8_t)(tmp);
+
+		// PWM Channel 10		
+		tmp = getGammaValue(dimOut[10]);
+		extPWMchH[2] =  (uint8_t)(tmp >> 8);
+		extPWMchL[2] =  (uint8_t)(tmp);
+
+		// PWM Channel 11		
+		tmp = getGammaValue(dimOut[11]);
+		extPWMchH[3] =  (uint8_t)(tmp >> 8);
+		extPWMchL[3] =  (uint8_t)(tmp);
+
+		// PWM Channel 12		
+		tmp = getGammaValue(dimOut[12]);
+		extPWMchH[4] =  (uint8_t)(tmp >> 8);
+		extPWMchL[4] =  (uint8_t)(tmp);
+
+		// PWM Channel 13		
+		tmp = getGammaValue(dimOut[13]);
+		extPWMchH[5] =  (uint8_t)(tmp >> 8);
+		extPWMchL[5] =  (uint8_t)(tmp);
+
+		// PWM Channel 14		
+		tmp = getGammaValue(dimOut[14]);
+		extPWMchH[6] =  (uint8_t)(tmp >> 8);
+		extPWMchL[6] =  (uint8_t)(tmp);
+
+		// PWM Channel 15		
+		tmp = getGammaValue(dimOut[15]);
+		extPWMchH[7] =  (uint8_t)(tmp >> 8);
+		extPWMchL[7] =  (uint8_t)(tmp);
+
+		// PWM Channel 16		
+		tmp = getGammaValue(dimOut[16]);
+		extPWMchH[8] =  (uint8_t)(tmp >> 8);
+		extPWMchL[8] =  (uint8_t)(tmp);
+
+		// PWM Channel 17		
+		tmp = getGammaValue(dimOut[17]);
+		extPWMchH[9] =  (uint8_t)(tmp >> 8);
+		extPWMchL[9] =  (uint8_t)(tmp);
+
+		// PWM Channel 18		
+		tmp = getGammaValue(dimOut[18]);
+		extPWMchH[10] =  (uint8_t)(tmp >> 8);
+		extPWMchL[10] =  (uint8_t)(tmp);
+
+		// PWM Channel 19		
+		tmp = getGammaValue(dimOut[19]);
+		extPWMchH[11] =  (uint8_t)(tmp >> 8);
+		extPWMchL[11] =  (uint8_t)(tmp);
+
+		// PWM Channel 20		
+		tmp = getGammaValue(dimOut[20]);
+		extPWMchH[12] =  (uint8_t)(tmp >> 8);
+		extPWMchL[12] =  (uint8_t)(tmp);
+
+		// PWM Channel 21		
+		tmp = getGammaValue(dimOut[21]);
+		extPWMchH[13] =  (uint8_t)(tmp >> 8);
+		extPWMchL[13] =  (uint8_t)(tmp);
+
+		// PWM Channel 22		
+		tmp = getGammaValue(dimOut[22]);
+		extPWMchH[14] =  (uint8_t)(tmp >> 8);
+		extPWMchL[14] =  (uint8_t)(tmp);
+
+		// PWM Channel 23		
+		tmp = getGammaValue(dimOut[23]);
+		extPWMchH[15] =  (uint8_t)(tmp >> 8);
+		extPWMchL[15] =  (uint8_t)(tmp);
+
+
 	}
 	else
 	{
 		// PWM Channel 0
-		//TIM1_SetCompare1(GammaTable[freq][pwmOut[0]]);
-		tmp = LinearTable[pwmFreq][dimOut[0]];
+		tmp = getLinearValue(dimOut[0]);
 		TIM1_CCR1H = (uint8_t)(tmp >> 8);
 		TIM1_CCR1L = (uint8_t)(tmp);
 		debug1 = tmp;
 		// PWM Channel 1
-		//TIM1_SetCompare2(GammaTable[freq][pwmOut[1]]);
-		tmp = LinearTable[pwmFreq][dimOut[1]];
+		tmp = getLinearValue(dimOut[1]);
 		TIM1_CCR2H = (uint8_t)(tmp >> 8);
 		TIM1_CCR2L = (uint8_t)(tmp);
 		
 		// PWM Channel 2
-		//TIM1_SetCompare3(GammaTable[freq][pwmOut[2]]);
-		tmp = LinearTable[pwmFreq][dimOut[2]];
+		tmp = getLinearValue(dimOut[2]);
 		TIM1_CCR3H = (uint8_t)(tmp >> 8);
 		TIM1_CCR3L = (uint8_t)(tmp);
 		
 		// PWM Channel 3
-		//TIM1_SetCompare4(GammaTable[freq][pwmOut[3]]);
-		tmp = LinearTable[pwmFreq][dimOut[3]];
+		tmp = getLinearValue(dimOut[3]);
 		TIM1_CCR4H = (uint8_t)(tmp >> 8);
 		TIM1_CCR4L = (uint8_t)(tmp);
 		
 		// PWM Channel 4
-		//TIM3_SetCompare2(GammaTable[freq][pwmOut[4]]);		
-		tmp = LinearTable[pwmFreq][dimOut[4]];
+		tmp = getLinearValue(dimOut[4]);
 		TIM3_CCR2H = (uint8_t)(tmp >> 8);
 		TIM3_CCR2L = (uint8_t)(tmp);
 		
 		// PWM Channel 5		
-		//TIM3_SetCompare1(GammaTable[freq][pwmOut[5]]);
-		tmp = LinearTable[pwmFreq][dimOut[5]];
+		tmp = getLinearValue(dimOut[5]);
 		TIM3_CCR1H = (uint8_t)(tmp >> 8);
 		TIM3_CCR1L = (uint8_t)(tmp);
 		
 		// PWM Channel 6
-		//TIM2_SetCompare2(GammaTable[freq][pwmOut[6]]);	
-		tmp = LinearTable[pwmFreq][dimOut[6]];
+		tmp = getLinearValue(dimOut[6]);
 		TIM2_CCR2H = (uint8_t)(tmp >> 8);
 		TIM2_CCR2L = (uint8_t)(tmp);
 		
 		// PWM Channel 7		
-		//TIM2_SetCompare1(GammaTable[freq][pwmOut[7]]);
-		tmp = LinearTable[pwmFreq][dimOut[7]];
+		tmp = getLinearValue(dimOut[7]);
 		TIM2_CCR1H = (uint8_t)(tmp >> 8);
 		TIM2_CCR1L = (uint8_t)(tmp);
+		
+		// extern channels PWM generated on slave cpu's
+		// PWM Channel 8		
+		tmp = getLinearValue(dimOut[8]);
+		extPWMchH[0] =  (uint8_t)(tmp >> 8);
+		extPWMchL[0] =  (uint8_t)(tmp);
+
+		// PWM Channel 9		
+		tmp = getLinearValue(dimOut[9]);
+		extPWMchH[1] =  (uint8_t)(tmp >> 8);
+		extPWMchL[1] =  (uint8_t)(tmp);
+
+		// PWM Channel 10		
+		tmp = getLinearValue(dimOut[10]);
+		extPWMchH[2] =  (uint8_t)(tmp >> 8);
+		extPWMchL[2] =  (uint8_t)(tmp);
+
+		// PWM Channel 11		
+		tmp = getLinearValue(dimOut[11]);
+		extPWMchH[3] =  (uint8_t)(tmp >> 8);
+		extPWMchL[3] =  (uint8_t)(tmp);
+
+		// PWM Channel 12		
+		tmp = getLinearValue(dimOut[12]);
+		extPWMchH[4] =  (uint8_t)(tmp >> 8);
+		extPWMchL[4] =  (uint8_t)(tmp);
+
+		// PWM Channel 13		
+		tmp = getLinearValue(dimOut[13]);
+		extPWMchH[5] =  (uint8_t)(tmp >> 8);
+		extPWMchL[5] =  (uint8_t)(tmp);
+
+		// PWM Channel 14		
+		tmp = getLinearValue(dimOut[14]);
+		extPWMchH[6] =  (uint8_t)(tmp >> 8);
+		extPWMchL[6] =  (uint8_t)(tmp);
+
+		// PWM Channel 15		
+		tmp = getLinearValue(dimOut[15]);
+		extPWMchH[7] =  (uint8_t)(tmp >> 8);
+		extPWMchL[7] =  (uint8_t)(tmp);
+
+		// PWM Channel 16		
+		tmp = getLinearValue(dimOut[16]);
+		extPWMchH[8] =  (uint8_t)(tmp >> 8);
+		extPWMchL[8] =  (uint8_t)(tmp);
+
+		// PWM Channel 17		
+		tmp = getLinearValue(dimOut[17]);
+		extPWMchH[9] =  (uint8_t)(tmp >> 8);
+		extPWMchL[9] =  (uint8_t)(tmp);
+
+		// PWM Channel 18		
+		tmp = getLinearValue(dimOut[18]);
+		extPWMchH[10] =  (uint8_t)(tmp >> 8);
+		extPWMchL[10] =  (uint8_t)(tmp);
+
+		// PWM Channel 19		
+		tmp = getLinearValue(dimOut[19]);
+		extPWMchH[11] =  (uint8_t)(tmp >> 8);
+		extPWMchL[11] =  (uint8_t)(tmp);
+
+		// PWM Channel 20		
+		tmp = getLinearValue(dimOut[20]);
+		extPWMchH[12] =  (uint8_t)(tmp >> 8);
+		extPWMchL[12] =  (uint8_t)(tmp);
+
+		// PWM Channel 21		
+		tmp = getLinearValue(dimOut[21]);
+		extPWMchH[13] =  (uint8_t)(tmp >> 8);
+		extPWMchL[13] =  (uint8_t)(tmp);
+
+		// PWM Channel 22		
+		tmp = getLinearValue(dimOut[22]);
+		extPWMchH[14] =  (uint8_t)(tmp >> 8);
+		extPWMchL[14] =  (uint8_t)(tmp);
+
+		// PWM Channel 23		
+		tmp = getLinearValue(dimOut[23]);
+		extPWMchH[15] =  (uint8_t)(tmp >> 8);
+		extPWMchL[15] =  (uint8_t)(tmp);
 
 	}
 
 }
 
+
+/**
+  * @brief  Set new Timer Period
+  * @param  None
+  * @retval None
+  */
+void TIMreconfigPeriod(unsigned short period)
+{
+
+	TIM1_ARRH = (uint8_t)(period >> 8);
+	TIM1_ARRL = (uint8_t)(period);
+
+	TIM2_ARRH = (uint8_t)(period >> 8);
+	TIM2_ARRL = (uint8_t)(period);
+
+	TIM3_ARRH = (uint8_t)(period >> 8);
+	TIM3_ARRL = (uint8_t)(period);
+
+}	
 
 
 
@@ -485,8 +705,6 @@ void TIM_PWM_Update(void)
   */
 void TIM1_Config(void)
 {
-
-
 
 	// PWM Ports -> PWM1(PC1 Tim1Ch1), PWM2(PC2 Tim1Ch2), PWM3(PC3 Tim1Ch3), PWM4(PC4 Tim1Ch4)
 		// -> Output push-pull, low level, 10MHz 
@@ -502,7 +720,7 @@ void TIM1_Config(void)
   TIM1_CounterMode = TIM1_COUNTERMODE_UP
   TIM1_RepetitionCounter = 0
   */
-  TIM1_TimeBaseInit(0, TIM1_COUNTERMODE_UP, TIM_Get_Reload(), 0);
+  TIM1_TimeBaseInit(0, TIM1_COUNTERMODE_UP, TIM_pwmFreq2Period(pwmFreq), 0);
 
 
   /* Channel 1, 2,3 and 4 Configuration in PWM mode */
@@ -580,13 +798,15 @@ void TIM1_Config(void)
 void TIM2_Config(void)
 {
 
+	TIM2_DeInit();
+
 	// PWM Ports -> PWM7(PD3 Tim2Ch2), PWM8(PD4 Tim2Ch1)
 	// -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOD, GPIO_PIN_3 | GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_FAST);
 
 
 	/* Time base configuration */
-  TIM2_TimeBaseInit(TIM2_PRESCALER_1, TIM_Get_Reload());
+  TIM2_TimeBaseInit(TIM2_PRESCALER_1, TIM_pwmFreq2Period(pwmFreq));
 
   /* PWM1 Mode configuration: Channel1 */ 
   TIM2_OC1Init(	TIM2_OCMODE_PWM1,
@@ -609,7 +829,7 @@ void TIM2_Config(void)
 /* : Channel3 used as fixed interrupt timing source*/ 
 	TIM2_OC3Init(	TIM2_OCMODE_ACTIVE,
 								TIM2_OUTPUTSTATE_DISABLE,
-								3999,
+								0,
 								TIM2_OCPOLARITY_HIGH
 							);
   TIM2_OC3PreloadConfig(DISABLE);
@@ -637,13 +857,14 @@ void TIM2_Config(void)
 void TIM3_Config(void)
 {
 
+	TIM3_DeInit();
 	// PWM Ports -> PWM5(PD0 Tim3Ch2), PWM6(PD2 Tim3Ch1)
 	// -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOD, GPIO_PIN_0 | GPIO_PIN_2 , GPIO_MODE_OUT_PP_LOW_FAST);
 
 
 	/* Time base configuration */
-	TIM3_TimeBaseInit(TIM3_PRESCALER_1, TIM_Get_Reload());
+	TIM3_TimeBaseInit(TIM3_PRESCALER_1, TIM_pwmFreq2Period(pwmFreq));
 
   /* PWM1 Mode configuration: Channel1 */ 
   TIM3_OC1Init(	TIM3_OCMODE_PWM1,
@@ -711,7 +932,47 @@ static volatile unsigned int comp_1000ms = 37;
 
 	TIM2_SR1 bclr TIM2_SR1_CC3IF;	// reset interrupt pending bit
 
-	GPIOA_ODR bset GPIO_PIN_6;
+	GPIOA_ODR bset GPIO_PIN_5;
+
+
+	switch (TIM2_CCR3H)
+	{
+		case 0x00:	// Counter value was 0
+			TIM2_CCR3H = 0x1F;
+			TIM2_CCR3L = 0x40;
+			break;
+		case 0x1F:	// Counter value was 8000 (0x1F40)
+			TIM2_CCR3H = 0x3E;
+			TIM2_CCR3L = 0x80;
+			break;
+		case 0x3E:	// Counter value was 16000 (0x3E80)		
+			TIM2_CCR3H = 0x5D;
+			TIM2_CCR3L = 0xC0;
+			break;		
+		case 0x5D:	// Counter value was 24000 (0x5DC0)		
+			TIM2_CCR3H = 0x7D;
+			TIM2_CCR3L = 0x00;
+			break;		
+		case 0x7D:	// Counter value was 32000 (0x7D00)		
+			TIM2_CCR3H = 0x9C;
+			TIM2_CCR3L = 0x40;
+			break;		
+		case 0x9C:	// Counter value was 40000 (0x9C40)		
+			TIM2_CCR3H = 0xBB;
+			TIM2_CCR3L = 0x80;		
+			break;		
+		case 0xBB:	// Counter value was 48000 (0xBB80)		
+			TIM2_CCR3H = 0xDA;
+			TIM2_CCR3L = 0xC0;		
+			break;		
+		case 0xDA:	// Counter value was 56000 (0xDAC0)		
+			TIM2_CCR3H = 0x00;
+			TIM2_CCR3L = 0x00;		
+			break;		
+		
+		default:
+			break;				
+	}
 
 	//----------------------------------------------------
 	// 0,5ms cycles	
@@ -794,7 +1055,7 @@ static volatile unsigned int comp_1000ms = 37;
 	}
 	cnt++;
 
-	GPIOA_ODR bclr GPIO_PIN_6;
+	GPIOA_ODR bclr GPIO_PIN_5;
 
 
 }

@@ -24,6 +24,7 @@
 /* Exported variables---------------------------------------------------------*/
 
 /* Exported functions ------------------------------------------------------- */
+extern void initMasterCpuCom(void);
 
 #endif  /* _CPUMASTER_H */
 

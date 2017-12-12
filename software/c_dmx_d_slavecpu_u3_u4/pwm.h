@@ -23,10 +23,11 @@
 
 /* Exported variables---------------------------------------------------------*/
 extern volatile unsigned int pwmOut[24];
-extern volatile unsigned char pwmFreq;		// 1 = 2KHz, 2 = 1KHz, 3= 500Hz
+extern volatile unsigned short gPeriod;
 
 /* Exported functions ------------------------------------------------------- */
 extern void TIM_PWM_Update(void);
+extern void TIMreconfigPeriod(unsigned short period);
 extern void initPWM(void);
 #endif  /* _PWM_H */
 

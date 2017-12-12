@@ -35,6 +35,12 @@ void CLK_Config(void)
 {
    ErrorStatus status = FALSE;
 
+
+		// CPU OscIn OscOut PA1 and PA2 -> Input pullup, no IRQ
+		// make sure "EXT Clock" ist set in Option area to allow a digital clock singnal 
+		// to drive the CPU 
+		GPIO_Init(GPIOA, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_IN_PU_NO_IT );
+
     CLK_DeInit();
 
     /* Configure the Fcpu to DIV1*/
@@ -44,7 +50,7 @@ void CLK_Config(void)
     CLK_SYSCLKConfig(CLK_PRESCALER_HSIDIV1);
 
     /* Output Fcpu on CLK_CCO pin */
-    CLK_CCOConfig(CLK_OUTPUT_CPU);
+    //CLK_CCOConfig(CLK_OUTPUT_CPU);
         
     /* Configure the system clock to use HSE clock source and to run at 24Mhz */
     status = CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_HSE, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
@@ -66,6 +72,8 @@ static uint32_t LSIMeasurment(void)
   uint32_t fmaster = 0x0;
   uint16_t ICValue1 = 0x0;
   uint16_t ICValue2 = 0x0;
+
+	TIM3_DeInit();
 
   /* Get master frequency */
   fmaster = CLK_GetClockFreq();
@@ -131,7 +139,7 @@ static void IWDG_Config(void)
   IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
   
   /* IWDG counter clock: LSI/64 */
-  IWDG_SetPrescaler(IWDG_Prescaler_64);
+  IWDG_SetPrescaler(IWDG_Prescaler_256);		// 1000ms timeout
   
   /* Set counter reload value to obtain 250ms IWDG Timeout.
     Counter Reload Value = 250ms/IWDG counter clock period
@@ -197,24 +205,46 @@ void GPIO_Config(void)
 	// check jumper resitors for getting infomation if CPU is soldered on U3 or U4
 	jumperConfig = Check_Jumpers();
 
-	// CPU BusData bits -> Output push-pull, low level, 10MHz 
-	GPIO_Init(GPIOB, GPIO_PIN_ALL, GPIO_MODE_OUT_PP_LOW_FAST );
-	// CPU BusClk & BusSel -> Output push-pull, low level, 10MHz 
-	GPIO_Init(GPIOE, GPIO_PIN_1 | GPIO_PIN_2, GPIO_MODE_OUT_PP_LOW_FAST );
-	// CPU BusOsc -> Output push-pull, low level, 10MHz 
-	GPIO_Init(GPIOE, GPIO_PIN_0, GPIO_MODE_OUT_PP_LOW_FAST );
+	// DEBUG CPU BusData Pin PB0 to PB5 -> Input Float no IT 
+	GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 , GPIO_MODE_OUT_PP_LOW_FAST );
 
-	// Button PortPins -> Input pull-up, no external interrupt
-	//GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 , GPIO_MODE_IN_PU_NO_IT);	
+	// CPU BusData Pin PB0 to PB5 -> Input Float no IT 
+//DEBUG	GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 , GPIO_MODE_IN_FL_NO_IT );
+	// CPU BusData Pin PC6 to PC7 -> Input Float no IT 
+	GPIO_Init(GPIOC, GPIO_PIN_6 | GPIO_PIN_7 , GPIO_MODE_IN_FL_NO_IT );
+	// CPU BusClk/PD6 & BusSel/PD7 -> Output push-pull, low level, 10MHz 
+	GPIO_Init(GPIOD, GPIO_PIN_6 | GPIO_PIN_7, GPIO_MODE_IN_FL_IT );
+
+
+
+
 	
-	// only for DEBUG
-	GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 , GPIO_MODE_OUT_PP_LOW_FAST);		
-	GPIO_WriteLow(GPIOA, GPIO_PIN_4);
-	GPIO_WriteLow(GPIOA, GPIO_PIN_5);
-	GPIO_WriteLow(GPIOA, GPIO_PIN_6);	
+}
 
-	// RUN LED -> Output push-pull, low level, 2MHz
-	GPIO_Init(GPIOE, GPIO_PIN_6, GPIO_MODE_OUT_PP_LOW_SLOW );
+/**
+  * @brief  if needed set Option byte for "EXT CLK"
+  *
+  * @param  None
+  * @retval None
+  */
+void doOptionBytes(void)
+{
+
+unsigned short optionByte;
+
+ /* Define flash programming Time*/
+  FLASH_SetProgrammingTime(FLASH_PROGRAMTIME_STANDARD);
+
+	// Unlock flash data eeprom memory
+	FLASH_Unlock(FLASH_MEMTYPE_DATA);
+	/* Wait until Data EEPROM area unlocked flag is set*/
+	while (FLASH_GetFlagStatus(FLASH_FLAG_DUL) == RESET){};
+
+	optionByte = FLASH_ReadOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 7); 	// read CLK OPTION byte
+	if ((optionByte & 0x0808) != 0x0800)
+	{
+		FLASH_ProgramOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 7, 0x08);		// set "EXT CLK" Option bit in "Clock Option" Byte
+	}
 
 
 }
@@ -228,12 +258,15 @@ void GPIO_Config(void)
   */
 void initHardware(void){
 
+	/* Check Option bytes for EXT Clock Config, if not done, set it */
+	// this is important, as slave CPU getting its working clock (16Mhz) from master CPU
+	doOptionBytes();
 	/* Clock configuration ----------------------------------------*/
 	CLK_Config();    
 	/* GPIO Configuration  ----------------------------------------*/
 	GPIO_Config();  
 	/* IWDG Configuration -----------------------------------------*/
-	IWDG_Config();
+	//IWDG_Config();
 
 
 }

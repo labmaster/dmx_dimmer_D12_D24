@@ -119,16 +119,22 @@ unsigned char masterCpu_sendByte(unsigned char byte)
   * @param none
   * @retval
   */
-
-void initMasterCpu(void)
+void initMasterCpuCom(void)
 {
 
+	// CPU BusData bits -> Output push-pull, low level, 10MHz 
+	GPIO_Init(GPIOB, GPIO_PIN_ALL, GPIO_MODE_IN_FL_NO_IT );
+	// CPU BusClk & BusSel -> Output push-pull, low level, 10MHz 
+	GPIO_Init(GPIOE, GPIO_PIN_1 | GPIO_PIN_2, GPIO_MODE_IN_FL_NO_IT );
+
+/*
 	// CPU BusData bits -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOB, GPIO_PIN_ALL, GPIO_MODE_OUT_PP_LOW_FAST );
 	// CPU BusClk & BusSel -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOE, GPIO_PIN_1 | GPIO_PIN_2, GPIO_MODE_OUT_PP_LOW_FAST );
 	// CPU BusOsc -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOE, GPIO_PIN_0, GPIO_MODE_OUT_PP_LOW_FAST );
+*/
 
 
 }	

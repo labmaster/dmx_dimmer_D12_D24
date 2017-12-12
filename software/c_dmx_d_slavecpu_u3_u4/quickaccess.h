@@ -27,12 +27,14 @@
 #define GPIOC_ODR	(*(__IO uint8_t *)(GPIOC_BaseAddress + 0))
 #define GPIOD_ODR	(*(__IO uint8_t *)(GPIOD_BaseAddress + 0))
 #define GPIOE_ODR	(*(__IO uint8_t *)(GPIOE_BaseAddress + 0))
+#define GPIOF_ODR	(*(__IO uint8_t *)(GPIOF_BaseAddress + 0))
 
 #define GPIOA_IDR	(*(__IO uint8_t *)(GPIOA_BaseAddress + 1))
 #define GPIOB_IDR	(*(__IO uint8_t *)(GPIOB_BaseAddress + 1))
 #define GPIOC_IDR	(*(__IO uint8_t *)(GPIOC_BaseAddress + 1))
 #define GPIOD_IDR	(*(__IO uint8_t *)(GPIOD_BaseAddress + 1))
 #define GPIOE_IDR	(*(__IO uint8_t *)(GPIOE_BaseAddress + 1))
+#define GPIOF_IDR	(*(__IO uint8_t *)(GPIOF_BaseAddress + 1))
 
 #define	TIM4_CR1	(*(__IO uint8_t *)(TIM4_BaseAddress + 0))
 #define	TIM4_SR		(*(__IO uint8_t *)(TIM4_BaseAddress + 2))
@@ -52,6 +54,10 @@
 #define	EXTI_CR1		(*(__IO uint8_t *)(EXTI_BaseAddress + 0))  
 #define	EXTI_CR2		(*(__IO uint8_t *)(EXTI_BaseAddress + 1))  
 
+#define TIM1_ARRH		(*(__IO uint8_t *)(TIM1_BaseAddress + 18))
+#define TIM1_ARRL		(*(__IO uint8_t *)(TIM1_BaseAddress + 19))
+
+
 #define TIM1_CCR1H	(*(__IO uint8_t *)(TIM1_BaseAddress + 21))
 #define TIM1_CCR1L	(*(__IO uint8_t *)(TIM1_BaseAddress + 22))
 #define TIM1_CCR2H	(*(__IO uint8_t *)(TIM1_BaseAddress + 23))
@@ -61,6 +67,11 @@
 #define TIM1_CCR4H	(*(__IO uint8_t *)(TIM1_BaseAddress + 27))
 #define TIM1_CCR4L	(*(__IO uint8_t *)(TIM1_BaseAddress + 28))
 
+#define TIM2_SR1		(*(__IO uint8_t *)(TIM2_BaseAddress + 2))
+
+#define TIM2_ARRH		(*(__IO uint8_t *)(TIM2_BaseAddress + 13))
+#define TIM2_ARRL		(*(__IO uint8_t *)(TIM2_BaseAddress + 14))
+
 #define TIM2_CCR1H	(*(__IO uint8_t *)(TIM2_BaseAddress + 15))
 #define TIM2_CCR1L	(*(__IO uint8_t *)(TIM2_BaseAddress + 16))
 #define TIM2_CCR2H	(*(__IO uint8_t *)(TIM2_BaseAddress + 17))
@@ -68,6 +79,12 @@
 #define TIM2_CCR3H	(*(__IO uint8_t *)(TIM2_BaseAddress + 19))
 #define TIM2_CCR3L	(*(__IO uint8_t *)(TIM2_BaseAddress + 20))
 
+#define TIM2_CNTRH	(*(__IO uint8_t *)(TIM2_BaseAddress + 10))
+#define TIM2_CNTRL	(*(__IO uint8_t *)(TIM2_BaseAddress + 11))
+
+
+#define TIM3_ARRH		(*(__IO uint8_t *)(TIM3_BaseAddress + 11))
+#define TIM3_ARRL		(*(__IO uint8_t *)(TIM3_BaseAddress + 12))
 #define TIM3_CCR1H	(*(__IO uint8_t *)(TIM3_BaseAddress + 13))
 #define TIM3_CCR1L	(*(__IO uint8_t *)(TIM3_BaseAddress + 14))
 #define TIM3_CCR2H	(*(__IO uint8_t *)(TIM3_BaseAddress + 15))

@@ -36,13 +36,25 @@ void main(void)
 {
 
 	initHardware();
+
 	initPWM();
 
 	/* Enable general interrupts ----------------------------------*/
 	enableInterrupts();    
 
 	while(1){
-		_delay_ms(100);
+		_delay_ms(200);
+		
+		pwmOut[0] = 4000;
+		pwmOut[1] = 4000;
+		pwmOut[2] = 4000;  
+		pwmOut[3] = 4000;
+		pwmOut[4] = 4000;
+		pwmOut[5] = 4000;
+		pwmOut[6] = 4000;
+		pwmOut[7] = 4000;
+		TIM_PWM_Update();
+		
 		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
 	}
 

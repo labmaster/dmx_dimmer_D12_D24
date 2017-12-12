@@ -115,7 +115,7 @@ void EEReadArray(unsigned int address, unsigned char * dest, unsigned char count
 	}	
 }
 
-#define	EEP_VERSION							0x07
+#define	EEP_VERSION							0x09
 /**
   * @brief initialize eeprom content
   * @param None
@@ -131,7 +131,7 @@ void initEE(void)
 			(EEReadByte(EEPADR_VERSION) != EEP_VERSION))
 	{
 		EEWriteByte(EEPADR_DMXFreq, 0);				// 2000KHz
-		EEWriteByte(EEPADR_DMXCurve, 0);				// Linear Dim Kurve
+		EEWriteByte(EEPADR_DMXCurve, 1);				// Linear Dim Kurve
 		EEWriteByte(EEPADR_DMXChannels, 24);		// 24 Channels
 		EEWriteByte(EEPADR_DMXStartAdr_H, 0);	// Start at DMX addresse 0
 		EEWriteByte(EEPADR_DMXStartAdr_L, 0);

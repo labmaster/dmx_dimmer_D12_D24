@@ -44,7 +44,10 @@ void CLK_Config(void)
 
     /* Output Fcpu on CLK_CCO pin */
     CLK_CCOConfig(CLK_OUTPUT_CPU);
-        
+
+		// CPU BusOsc ( CLK_CCO pin ) -> Output push-pull, low level, 10MHz 
+		GPIO_Init(GPIOE, GPIO_PIN_0, GPIO_MODE_OUT_PP_LOW_FAST );
+
     /* Configure the system clock to use HSE clock source and to run at 24Mhz */
     status = CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_HSE, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
     /* Configure the system clock to use HSI clock source and to run at 16Mhz */
@@ -132,7 +135,7 @@ static void IWDG_Config(void)
   IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
   
   /* IWDG counter clock: LSI/64 */
-  IWDG_SetPrescaler(IWDG_Prescaler_64);
+  IWDG_SetPrescaler(IWDG_Prescaler_256);		// 64 = 250ms, 128 = 500ms, 256 = 1000ms
   
   /* Set counter reload value to obtain 250ms IWDG Timeout.
     Counter Reload Value = 250ms/IWDG counter clock period

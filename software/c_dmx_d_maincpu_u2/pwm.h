@@ -22,7 +22,8 @@
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported variables---------------------------------------------------------*/
-extern volatile unsigned char dimOut[24];
+extern volatile unsigned short dimOut[24];
+extern volatile unsigned short dimIn[24];
 extern volatile unsigned char pwmFreq;		// 0 = 2KHz, 1 = 1KHz, 2= 500Hz, 3= 250Hz
 extern volatile unsigned char pwmCurve;	// 0 = Linear Curve
 extern volatile unsigned long msCnt;	

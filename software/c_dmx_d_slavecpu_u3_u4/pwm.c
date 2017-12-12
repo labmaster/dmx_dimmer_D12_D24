@@ -28,6 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm8s.h"
 #include "pwm.h"
+#include "quickaccess.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -35,7 +36,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 volatile unsigned int pwmOut[24];
-volatile unsigned char pwmFreq = 1;	// 1 = 4KHz, 2 = 2KHz, 3 = 1KHz, 4 = 500Hz, 5 = 250Hz
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -49,21 +49,42 @@ volatile unsigned char pwmFreq = 1;	// 1 = 4KHz, 2 = 2KHz, 3 = 1KHz, 4 = 500Hz, 
 void TIM_PWM_Update(void)
 {
 
-	unsigned long pwmPeriodcalc;
 	
-	
-	TIM1_SetCompare1(pwmOut[0]*pwmFreq);
-	TIM1_SetCompare2(pwmOut[1]*pwmFreq);
-	TIM1_SetCompare3(pwmOut[2]*pwmFreq);
-	TIM1_SetCompare4(pwmOut[3]*pwmFreq);
+	TIM1_SetCompare1(pwmOut[0]);
+	TIM1_SetCompare2(pwmOut[1]);
+	TIM1_SetCompare3(pwmOut[2]);
+	TIM1_SetCompare4(pwmOut[3]);
 
-	TIM2_SetCompare1(pwmOut[7]*pwmFreq);
-	TIM2_SetCompare2(pwmOut[6]*pwmFreq);	
+	TIM3_SetCompare2(pwmOut[4]);	
+	TIM3_SetCompare1(pwmOut[5]);
 
-	TIM3_SetCompare1(pwmOut[5]*pwmFreq);
-	TIM3_SetCompare2(pwmOut[4]*pwmFreq);	
+	TIM2_SetCompare2(pwmOut[6]);	
+	TIM2_SetCompare1(pwmOut[7]);
+
+
 	
 }
+
+
+/**
+  * @brief  Set new Timer Period
+  * @param  None
+  * @retval None
+  */
+void TIMreconfigPeriod(unsigned short period)
+{
+
+	TIM1_ARRH = (uint8_t)(period >> 8);
+	TIM1_ARRL = (uint8_t)(period);
+
+	TIM2_ARRH = (uint8_t)(period >> 8);
+	TIM2_ARRL = (uint8_t)(period);
+
+	TIM3_ARRH = (uint8_t)(period >> 8);
+	TIM3_ARRL = (uint8_t)(period);
+
+}	
+
 
 
 /**
@@ -73,7 +94,6 @@ void TIM_PWM_Update(void)
   */
 void TIM1_Config(void)
 {
-
 
 	// PWM Ports -> PWM1(PC1 Tim1Ch1), PWM2(PC2 Tim1Ch2), PWM3(PC3 Tim1Ch3), PWM4(PC4 Tim1Ch4)
 		// -> Output push-pull, low level, 10MHz 
@@ -90,7 +110,7 @@ void TIM1_Config(void)
   TIM1_RepetitionCounter = 0
   */
 
-  TIM1_TimeBaseInit(0, TIM1_COUNTERMODE_UP, 4000 * pwmFreq - 1, 0);		// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
+  TIM1_TimeBaseInit(0, TIM1_COUNTERMODE_UP, gPeriod , 0);		// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
 
   /* Channel 1, 2,3 and 4 Configuration in PWM mode */
   
@@ -167,13 +187,15 @@ void TIM1_Config(void)
 void TIM2_Config(void)
 {
 
+	TIM2_DeInit();
+
 	// PWM Ports -> PWM7(PD3 Tim2Ch2), PWM8(PD4 Tim2Ch1)
 	// -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOD, GPIO_PIN_3 | GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_FAST);
 
 
 	/* Time base configuration */
-  TIM2_TimeBaseInit(TIM2_PRESCALER_1, 4000 * pwmFreq - 1);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
+  TIM2_TimeBaseInit(TIM2_PRESCALER_1, gPeriod);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
 
   /* PWM1 Mode configuration: Channel1 */ 
   TIM2_OC1Init(	TIM2_OCMODE_PWM1,
@@ -218,13 +240,15 @@ void TIM2_Config(void)
 void TIM3_Config(void)
 {
 
+	TIM3_DeInit();
+
 	// PWM Ports -> PWM5(PD0 Tim3Ch2), PWM6(PD2 Tim3Ch1)
 	// -> Output push-pull, low level, 10MHz 
 	GPIO_Init(GPIOD, GPIO_PIN_0 | GPIO_PIN_2 , GPIO_MODE_OUT_PP_LOW_FAST);
 
 
 	/* Time base configuration */
-  TIM3_TimeBaseInit(TIM3_PRESCALER_1, 8000 * pwmFreq - 1);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)	
+  TIM3_TimeBaseInit(TIM3_PRESCALER_1, gPeriod);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)	
 
   /* PWM1 Mode configuration: Channel1 */ 
   TIM3_OC1Init(	TIM3_OCMODE_PWM1,
@@ -263,7 +287,7 @@ void initPWM(void){
 	TIM2_Config();
   /* TIM3 configuration -----------------------------------------*/
 	TIM3_Config();
-	/* DMX Receive configuration ----------------------------------*/
+
 
 	
 	
