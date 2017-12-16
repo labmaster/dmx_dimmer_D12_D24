@@ -23,8 +23,12 @@
 #include "quickaccess.h"
 #include "main.h"
 #include "hardware.h"
+#include "cpuslave.h"
 #include "pwm.h"
 #include "delay.h"
+
+//#include "debugout.h"
+
 
 
 /**
@@ -36,26 +40,27 @@ void main(void)
 {
 
 	initHardware();
-
+	initSlaveCpuCom();
 	initPWM();
 
 	/* Enable general interrupts ----------------------------------*/
 	enableInterrupts();    
 
+	//DBG_Init();		// debug output
+
+
 	while(1){
-		_delay_ms(200);
-		
-		pwmOut[0] = 4000;
-		pwmOut[1] = 4000;
-		pwmOut[2] = 4000;  
-		pwmOut[3] = 4000;
-		pwmOut[4] = 4000;
-		pwmOut[5] = 4000;
-		pwmOut[6] = 4000;
-		pwmOut[7] = 4000;
-		TIM_PWM_Update();
-		
+
+		if(CPU_DataFlag)
+		{
+			TIM_PWM_Update();			
+
+			//DBG_outputCPUData();	// debug output
+
+			CPU_DataFlag = 0x00;
+		}
 		IWDG_KR = IWDG_KEY_REFRESH;	// do Watchdog Refresh
+
 	}
 
 }

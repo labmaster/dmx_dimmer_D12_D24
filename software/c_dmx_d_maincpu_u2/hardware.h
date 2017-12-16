@@ -20,6 +20,12 @@
 /* Exported constants --------------------------------------------------------*/
 
 /* Exported macro ------------------------------------------------------------*/
+#define	READ_KEY_M		(GPIOA_IDR & GPIO_PIN_4)	// Button M
+#define	READ_KEY_L		(GPIOA_IDR & GPIO_PIN_5)	// Button Arrow Left
+#define	READ_KEY_R		(GPIOA_IDR & GPIO_PIN_6)	// Button Arrow Right
+
+#define LED_ON				(GPIOE_ODR bset GPIO_PIN_6);
+#define LED_OFF				(GPIOE_ODR bclr GPIO_PIN_6);
 
 /* Exported variables---------------------------------------------------------*/
 extern volatile unsigned long  debug2;

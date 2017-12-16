@@ -22,12 +22,9 @@
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported variables---------------------------------------------------------*/
-extern volatile unsigned int pwmOut[24];
-extern volatile unsigned short gPeriod;
 
 /* Exported functions ------------------------------------------------------- */
 extern void TIM_PWM_Update(void);
-extern void TIMreconfigPeriod(unsigned short period);
 extern void initPWM(void);
 #endif  /* _PWM_H */
 

@@ -161,12 +161,6 @@ static void IWDG_Config(void)
 void GPIO_Config(void)
 {
 
-	GPIO_DeInit(GPIOA);
-	GPIO_DeInit(GPIOB);
-	GPIO_DeInit(GPIOC);
-	GPIO_DeInit(GPIOD);
-	GPIO_DeInit(GPIOE);
-	GPIO_DeInit(GPIOG);
 
 	// set open portpins to pullup (see schematic)
 	// !!! Do not let them float !!!
@@ -178,16 +172,17 @@ void GPIO_Config(void)
 	GPIO_Init(GPIOE, GPIO_PIN_3 | GPIO_PIN_5, GPIO_MODE_IN_PU_NO_IT);		
 	// PG0, PG1
 	GPIO_Init(GPIOG, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_IN_PU_NO_IT);		
-	
 
 	// Button PortPins -> Input pull-up, no external interrupt
-	//GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 , GPIO_MODE_IN_PU_NO_IT);	
+	// PA4 -> Button M
+	// PA5 -> Button Arrow Left
+	// PA6 -> Button Arrow Right
+	GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 , GPIO_MODE_IN_PU_NO_IT);	
+	//GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5  , GPIO_MODE_IN_PU_NO_IT);	
 	
 	// only for DEBUG
-	GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 , GPIO_MODE_OUT_PP_LOW_FAST);		
-	GPIO_WriteLow(GPIOA, GPIO_PIN_4);
-	GPIO_WriteLow(GPIOA, GPIO_PIN_5);
-	GPIO_WriteLow(GPIOA, GPIO_PIN_6);	
+	//GPIO_Init(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 , GPIO_MODE_OUT_PP_LOW_FAST);		
+	//GPIO_Init(GPIOA, GPIO_PIN_6, GPIO_MODE_OUT_PP_LOW_FAST);		
 
 	// RUN LED -> Output push-pull, low level, 2MHz
 	GPIO_Init(GPIOE, GPIO_PIN_6, GPIO_MODE_OUT_PP_LOW_SLOW );
@@ -204,12 +199,20 @@ void GPIO_Config(void)
   */
 void initHardware(void){
 
+	GPIO_DeInit(GPIOA);
+	GPIO_DeInit(GPIOB);
+	GPIO_DeInit(GPIOC);
+	GPIO_DeInit(GPIOD);
+	GPIO_DeInit(GPIOE);
+	GPIO_DeInit(GPIOG);
+	//GPIO_DeInit(GPIOF);
+
 	/* Clock configuration ----------------------------------------*/
 	CLK_Config();    
 	/* GPIO Configuration  ----------------------------------------*/
 	GPIO_Config();  
 	/* IWDG Configuration -----------------------------------------*/
-	IWDG_Config();
+	//IWDG_Config();
 
 }
 

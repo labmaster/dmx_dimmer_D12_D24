@@ -1,18 +1,18 @@
  /*******************************************************************************
-* File Name          : hardware.h
+* File Name          : cpuslave.h
 * Author             : W. Meyer
-* Date First Issued  : 01/11/2017
+* Date First Issued  : 11/11/2017
 ********************************************************************************
 * History:
-*  01/11/2017 : added clock_setup
+*  11/11/2017 : initial setup
 ********************************************************************************
 *
 *
 *******************************************************************************/
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _HARDWARE_H
- #define _HARDWARE_H
+#ifndef _CPUSLAVE_H
+ #define _CPUSLAVE_H
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -22,12 +22,12 @@
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported variables---------------------------------------------------------*/
-extern volatile unsigned char jumperConfig;
+extern volatile unsigned char CPU_Data[48];
+extern volatile unsigned char CPU_DataFlag;
 
 /* Exported functions ------------------------------------------------------- */
-extern void initHardware(void);
+extern void initSlaveCpuCom(void);
 
-
-#endif  /* _HARDWARE_H */
+#endif  /* _CPUSLAVE_H */
 
 /*******************************************************************************/

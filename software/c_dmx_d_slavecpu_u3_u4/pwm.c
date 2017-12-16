@@ -13,14 +13,14 @@
 * 2 x PMM on Timer 2
 * 2 x PMM on Timer 3
 *
-*	PWM1 = TIM1_CHANNEL1 on Pin PORT C1
-*	PWM2 = TIM1_CHANNEL2 on Pin PORT C2
-*	PWM3 = TIM1_CHANNEL3 on Pin PORT C3
-*	PWM4 = TIM1_CHANNEL4 on Pin PORT C4
-*	PWM5 = TIM3_CHANNEL2 on Pin PORT D0
-*	PWM6 = TIM3_CHANNEL1 on Pin PORT D2
-*	PWM7 = TIM2_CHANNEL2 on Pin PORT D3
-*	PWM8 = TIM2_CHANNEL1 on Pin PORT D4
+*	PWM1/9/17		= TIM1_CHANNEL1 on Pin PORT C1
+*	PWM2/10/18	= TIM1_CHANNEL2 on Pin PORT C2
+*	PWM3/11/19	= TIM1_CHANNEL3 on Pin PORT C3
+*	PWM4/12/20	= TIM1_CHANNEL4 on Pin PORT C4
+*	PWM5/13/21	= TIM3_CHANNEL2 on Pin PORT D0
+*	PWM6/14/22	= TIM3_CHANNEL1 on Pin PORT D2
+*	PWM7/15/23	= TIM2_CHANNEL2 on Pin PORT D3
+*	PWM8/16/24	= TIM2_CHANNEL1 on Pin PORT D4
 *
 * (see schematic for details)
 *******************************************************************************/
@@ -28,6 +28,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm8s.h"
 #include "pwm.h"
+#include "hardware.h"
+#include "cpuslave.h"
 #include "quickaccess.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,7 +37,6 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
-volatile unsigned int pwmOut[24];
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -46,44 +47,76 @@ volatile unsigned int pwmOut[24];
   * @param  None
   * @retval None
   */
+
 void TIM_PWM_Update(void)
 {
 
-	
-	TIM1_SetCompare1(pwmOut[0]);
-	TIM1_SetCompare2(pwmOut[1]);
-	TIM1_SetCompare3(pwmOut[2]);
-	TIM1_SetCompare4(pwmOut[3]);
+	TIM1_ARRH = CPU_Data[1];
+	TIM1_ARRL = CPU_Data[2];
 
-	TIM3_SetCompare2(pwmOut[4]);	
-	TIM3_SetCompare1(pwmOut[5]);
+	TIM2_ARRH = CPU_Data[1];
+	TIM2_ARRL = CPU_Data[2];
 
-	TIM2_SetCompare2(pwmOut[6]);	
-	TIM2_SetCompare1(pwmOut[7]);
+	TIM3_ARRH = CPU_Data[1];
+	TIM3_ARRL = CPU_Data[2];
 
+	switch(jumperConfig)
+	{
+		case 0x03:
+			TIM1_CCR1H = CPU_Data[19];
+			TIM1_CCR1L = CPU_Data[20];
+		
+			TIM1_CCR2H = CPU_Data[21];
+			TIM1_CCR2L = CPU_Data[22];
+		
+			TIM1_CCR3H = CPU_Data[23];
+			TIM1_CCR3L = CPU_Data[24];
+		
+			TIM1_CCR4H = CPU_Data[25];
+			TIM1_CCR4L = CPU_Data[26];
+		
+			TIM3_CCR2H = CPU_Data[27];
+			TIM3_CCR2L = CPU_Data[28];
+		
+			TIM3_CCR1H = CPU_Data[29];
+			TIM3_CCR1L = CPU_Data[30];
+		
+			TIM2_CCR2H = CPU_Data[31];
+			TIM2_CCR2L = CPU_Data[32];
+		
+			TIM2_CCR1H = CPU_Data[33];
+			TIM2_CCR1L = CPU_Data[34];
+			break;
+			
+		default:
+			TIM1_CCR1H = CPU_Data[3];
+			TIM1_CCR1L = CPU_Data[4];
+		
+			TIM1_CCR2H = CPU_Data[5];
+			TIM1_CCR2L = CPU_Data[6];
+		
+			TIM1_CCR3H = CPU_Data[7];
+			TIM1_CCR3L = CPU_Data[8];
+		
+			TIM1_CCR4H = CPU_Data[9];
+			TIM1_CCR4L = CPU_Data[10];
+		
+			TIM3_CCR2H = CPU_Data[11];
+			TIM3_CCR2L = CPU_Data[12];
+		
+			TIM3_CCR1H = CPU_Data[13];
+			TIM3_CCR1L = CPU_Data[14];
+		
+			TIM2_CCR2H = CPU_Data[15];
+			TIM2_CCR2L = CPU_Data[16];
+		
+			TIM2_CCR1H = CPU_Data[17];
+			TIM2_CCR1L = CPU_Data[18];
+			break;
 
-	
+	}
+
 }
-
-
-/**
-  * @brief  Set new Timer Period
-  * @param  None
-  * @retval None
-  */
-void TIMreconfigPeriod(unsigned short period)
-{
-
-	TIM1_ARRH = (uint8_t)(period >> 8);
-	TIM1_ARRL = (uint8_t)(period);
-
-	TIM2_ARRH = (uint8_t)(period >> 8);
-	TIM2_ARRL = (uint8_t)(period);
-
-	TIM3_ARRH = (uint8_t)(period >> 8);
-	TIM3_ARRL = (uint8_t)(period);
-
-}	
 
 
 
@@ -97,7 +130,9 @@ void TIM1_Config(void)
 
 	// PWM Ports -> PWM1(PC1 Tim1Ch1), PWM2(PC2 Tim1Ch2), PWM3(PC3 Tim1Ch3), PWM4(PC4 Tim1Ch4)
 		// -> Output push-pull, low level, 10MHz 
-	GPIO_Init(GPIOC, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_SLOW);
+
+	GPIO_Init(GPIOC, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_FAST);
+//	GPIO_Init(GPIOC, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_FAST);	// debug output
 
 
    TIM1_DeInit();
@@ -110,7 +145,7 @@ void TIM1_Config(void)
   TIM1_RepetitionCounter = 0
   */
 
-  TIM1_TimeBaseInit(0, TIM1_COUNTERMODE_UP, gPeriod , 0);		// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
+  TIM1_TimeBaseInit(0, TIM1_COUNTERMODE_UP, 63999 , 0);		// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
 
   /* Channel 1, 2,3 and 4 Configuration in PWM mode */
   
@@ -126,10 +161,11 @@ void TIM1_Config(void)
   
   */
   /*TIM1_Pulse = pwmOut[0]*/
+
 	TIM1_OC1Init(	TIM1_OCMODE_PWM2,
 								TIM1_OUTPUTSTATE_ENABLE,
 								TIM1_OUTPUTNSTATE_ENABLE,
-								pwmOut[0],
+								0,
 								TIM1_OCPOLARITY_LOW,
 								TIM1_OCNPOLARITY_HIGH,
 								TIM1_OCIDLESTATE_SET,
@@ -140,7 +176,7 @@ void TIM1_Config(void)
   TIM1_OC2Init(	TIM1_OCMODE_PWM2,
 								TIM1_OUTPUTSTATE_ENABLE,
 								TIM1_OUTPUTNSTATE_ENABLE,
-								pwmOut[1],
+								0,
 								TIM1_OCPOLARITY_LOW,
 								TIM1_OCNPOLARITY_HIGH,
 								TIM1_OCIDLESTATE_SET, 
@@ -151,7 +187,7 @@ void TIM1_Config(void)
   TIM1_OC3Init(	TIM1_OCMODE_PWM2,
 								TIM1_OUTPUTSTATE_ENABLE,
 								TIM1_OUTPUTNSTATE_ENABLE,
-								pwmOut[2],
+								0,
 								TIM1_OCPOLARITY_LOW,
 								TIM1_OCNPOLARITY_HIGH,
 								TIM1_OCIDLESTATE_SET,
@@ -161,7 +197,7 @@ void TIM1_Config(void)
 
   TIM1_OC4Init(	TIM1_OCMODE_PWM2,
 								TIM1_OUTPUTSTATE_ENABLE,
-								pwmOut[3],
+								0,
 								TIM1_OCPOLARITY_LOW,
 								TIM1_OCIDLESTATE_SET
 							);
@@ -191,16 +227,18 @@ void TIM2_Config(void)
 
 	// PWM Ports -> PWM7(PD3 Tim2Ch2), PWM8(PD4 Tim2Ch1)
 	// -> Output push-pull, low level, 10MHz 
+
 	GPIO_Init(GPIOD, GPIO_PIN_3 | GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_FAST);
+	//GPIO_Init(GPIOD, GPIO_PIN_3 , GPIO_MODE_OUT_PP_LOW_FAST);		// debug Output
 
 
 	/* Time base configuration */
-  TIM2_TimeBaseInit(TIM2_PRESCALER_1, gPeriod);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
+  TIM2_TimeBaseInit(TIM2_PRESCALER_1, 63999);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)
 
   /* PWM1 Mode configuration: Channel1 */ 
   TIM2_OC1Init(	TIM2_OCMODE_PWM1,
 								TIM2_OUTPUTSTATE_ENABLE,
-								pwmOut[7],
+								0,
 								TIM2_OCPOLARITY_HIGH
 							);
   TIM2_OC1PreloadConfig(ENABLE);
@@ -208,7 +246,7 @@ void TIM2_Config(void)
   /* PWM1 Mode configuration: Channel2 */ 
   TIM2_OC2Init(	TIM2_OCMODE_PWM1,
 								TIM2_OUTPUTSTATE_ENABLE,
-								pwmOut[6],
+								0,
 								TIM2_OCPOLARITY_HIGH
 							);
   TIM2_OC2PreloadConfig(ENABLE);
@@ -248,12 +286,12 @@ void TIM3_Config(void)
 
 
 	/* Time base configuration */
-  TIM3_TimeBaseInit(TIM3_PRESCALER_1, gPeriod);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)	
+  TIM3_TimeBaseInit(TIM3_PRESCALER_1, 63999);	// 16MHz / 2KHz = 4000 (count 0 to 3999 @ 4KHz)	
 
   /* PWM1 Mode configuration: Channel1 */ 
   TIM3_OC1Init(	TIM3_OCMODE_PWM1,
 								TIM3_OUTPUTSTATE_ENABLE,
-								pwmOut[5],
+								0,
 								TIM3_OCPOLARITY_HIGH
 							);
   TIM3_OC1PreloadConfig(ENABLE);
@@ -261,7 +299,7 @@ void TIM3_Config(void)
   /* PWM1 Mode configuration: Channel2 */ 
   TIM3_OC2Init(	TIM3_OCMODE_PWM1,
 								TIM3_OUTPUTSTATE_ENABLE,
-								pwmOut[4],
+								0,
 								TIM3_OCPOLARITY_HIGH
 							);
   TIM3_OC2PreloadConfig(ENABLE);

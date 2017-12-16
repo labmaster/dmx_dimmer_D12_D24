@@ -115,7 +115,7 @@ void EEReadArray(unsigned int address, unsigned char * dest, unsigned char count
 	}	
 }
 
-#define	EEP_VERSION							0x09
+#define	EEP_VERSION							0x08
 /**
   * @brief initialize eeprom content
   * @param None

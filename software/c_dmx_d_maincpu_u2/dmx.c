@@ -29,6 +29,7 @@ volatile unsigned char DMXgood = 0;
 volatile unsigned char DMXnew = 0;
 volatile unsigned int DMXptr;
 @near volatile unsigned char DMXin[520];
+@near volatile unsigned char DMXinFlag[520];
 volatile unsigned char DMXstartcode = 0;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -229,6 +230,7 @@ volatile uint8_t inChar;
 				if (DMXstartcode == 0)		// startcode for DMX data
 				{
 					DMXin[DMXptr]= inChar;
+					DMXinFlag[DMXptr] = 0xFF;
 				}
 //				if (DMXstartcode == 0xCC)	// startcode for RDM, future use !
 //				{

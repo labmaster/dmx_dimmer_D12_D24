@@ -28,6 +28,7 @@ extern volatile unsigned char DMXgood;
 extern volatile unsigned char DMXnew;
 extern volatile unsigned int DMXptr;
 @near extern volatile unsigned char DMXin[520];
+@near extern volatile unsigned char DMXinFlag[520];
 extern volatile unsigned char DMXstartcode;
 
 

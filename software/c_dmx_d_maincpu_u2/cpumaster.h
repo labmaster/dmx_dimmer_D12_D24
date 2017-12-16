@@ -25,6 +25,10 @@
 
 /* Exported functions ------------------------------------------------------- */
 extern void initMasterCpuCom(void);
+extern void EXT_PWM_Update(unsigned char ctrl);
+
+
+
 
 #endif  /* _CPUMASTER_H */
 

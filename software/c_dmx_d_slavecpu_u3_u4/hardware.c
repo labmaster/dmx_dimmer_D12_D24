@@ -171,7 +171,7 @@ unsigned char jumpers;
 
 	jumpers = (GPIOD_IDR & 0x20) | (GPIOF_IDR & 0x10);
 	jumpers = jumpers >> 4;
-	jumpers = jumpers ^ 0xff; // invert all jumper bits;
+	jumpers = jumpers ^ 0x03; // invert all jumper bits;
 	return jumpers;
 
 }
@@ -186,12 +186,6 @@ unsigned char jumpers;
 void GPIO_Config(void)
 {
 
-	GPIO_DeInit(GPIOA);
-	GPIO_DeInit(GPIOB);
-	GPIO_DeInit(GPIOC);
-	GPIO_DeInit(GPIOD);
-	GPIO_DeInit(GPIOE);
-	GPIO_DeInit(GPIOF);
 
 	// set open portpins to pullup (see schematic)
 	// !!! Do not let them float !!!
@@ -202,24 +196,20 @@ void GPIO_Config(void)
 	// PE5
 	GPIO_Init(GPIOE, GPIO_PIN_5, GPIO_MODE_IN_PU_NO_IT);		
 
-	// check jumper resitors for getting infomation if CPU is soldered on U3 or U4
-	jumperConfig = Check_Jumpers();
-
-	// DEBUG CPU BusData Pin PB0 to PB5 -> Input Float no IT 
-	GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 , GPIO_MODE_OUT_PP_LOW_FAST );
-
-	// CPU BusData Pin PB0 to PB5 -> Input Float no IT 
-//DEBUG	GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 , GPIO_MODE_IN_FL_NO_IT );
-	// CPU BusData Pin PC6 to PC7 -> Input Float no IT 
-	GPIO_Init(GPIOC, GPIO_PIN_6 | GPIO_PIN_7 , GPIO_MODE_IN_FL_NO_IT );
-	// CPU BusClk/PD6 & BusSel/PD7 -> Output push-pull, low level, 10MHz 
-	GPIO_Init(GPIOD, GPIO_PIN_6 | GPIO_PIN_7, GPIO_MODE_IN_FL_IT );
-
-
-
-
 	
 }
+
+
+#define OPTION_BYTES_CONFIG_ROP		0x00
+#define OPTION_BYTES_CONFIG_UBC		0x00
+#define OPTION_BYTES_CONFIG_AFR		0x00
+#define OPTION_BYTES_CONFIG_MISC	0x00
+#define OPTION_BYTES_CONFIG_CLK		0x08
+#define OPTION_BYTES_CONFIG_HSE		0x00
+#define OPTION_BYTES_CONFIG_RES1	0x00
+#define OPTION_BYTES_CONFIG_RES2	0x00
+#define OPTION_BYTES_CONFIG_RES3	0x00
+
 
 /**
   * @brief  if needed set Option byte for "EXT CLK"
@@ -231,6 +221,7 @@ void doOptionBytes(void)
 {
 
 unsigned short optionByte;
+unsigned char i;
 
  /* Define flash programming Time*/
   FLASH_SetProgrammingTime(FLASH_PROGRAMTIME_STANDARD);
@@ -240,12 +231,36 @@ unsigned short optionByte;
 	/* Wait until Data EEPROM area unlocked flag is set*/
 	while (FLASH_GetFlagStatus(FLASH_FLAG_DUL) == RESET){};
 
-	optionByte = FLASH_ReadOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 7); 	// read CLK OPTION byte
-	if ((optionByte & 0x0808) != 0x0800)
+	// User boot code (UBC)
+	optionByte = FLASH_ReadOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 1);
+	if (optionByte != 0x00FF)
 	{
-		FLASH_ProgramOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 7, 0x08);		// set "EXT CLK" Option bit in "Clock Option" Byte
+		FLASH_ProgramOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 1, 0x00);
 	}
-
+	// Alternate function remapping (AFR)
+	optionByte = FLASH_ReadOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 3);
+	if (optionByte != 0x00FF)
+	{
+		FLASH_ProgramOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 3, 0x00);
+	}
+	// Misc. option
+	optionByte = FLASH_ReadOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 5);
+	if (optionByte != 0x00FF)
+	{
+		FLASH_ProgramOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 5, 0x00);
+	}
+	// Clock option
+	optionByte = FLASH_ReadOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 7);
+	if (optionByte != 0x08F7)
+	{
+		FLASH_ProgramOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 7, 0x08);
+	}
+	// HSE clock startup
+	optionByte = FLASH_ReadOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 9);
+	if (optionByte != 0x00FF)
+	{
+		FLASH_ProgramOptionByte(OPTION_BYTE_START_PHYSICAL_ADDRESS + 9, 0x00);
+	}
 
 }
 
@@ -258,6 +273,13 @@ unsigned short optionByte;
   */
 void initHardware(void){
 
+	GPIO_DeInit(GPIOA);
+	GPIO_DeInit(GPIOB);
+	GPIO_DeInit(GPIOC);
+	GPIO_DeInit(GPIOD);
+	GPIO_DeInit(GPIOE);
+	GPIO_DeInit(GPIOF);
+
 	/* Check Option bytes for EXT Clock Config, if not done, set it */
 	// this is important, as slave CPU getting its working clock (16Mhz) from master CPU
 	doOptionBytes();
@@ -265,8 +287,12 @@ void initHardware(void){
 	CLK_Config();    
 	/* GPIO Configuration  ----------------------------------------*/
 	GPIO_Config();  
+
+	// check jumper resitors for getting infomation if CPU is soldered on U3 or U4
+	jumperConfig = Check_Jumpers();
+
 	/* IWDG Configuration -----------------------------------------*/
-	//IWDG_Config();
+	IWDG_Config();
 
 
 }
